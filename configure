@@ -1,0 +1,15 @@
+#!/bin/bash
+if [ ! $(which cmake) ]; then
+	echo "CMAKE not found."
+	exit 1
+fi
+
+mkdir -p build
+
+if [ "$1x" == "--cleanx" ]; then
+	rm -rf build
+	mkdir build
+fi
+cd build
+cmake ..
+
