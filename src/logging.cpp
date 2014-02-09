@@ -204,9 +204,13 @@ namespace util {
 				"../src/",
 				"src/"
 			};
-			for (size_t i = 0; i < ASIZE(prefixes); ++i)
-				if (strncmp(_file, prefixes[i], strlen(prefixes[i])) == 0)
-					_file += strlen(prefixes[i]);
+			for (size_t i = 0; i < ASIZE(prefixes); ++i) {
+				const char* offs = strstr(_file, prefixes[i]);
+				while (offs) {
+					_file = offs + strlen(prefixes[i]);
+					offs = strstr(_file, prefixes[i]);
+				}
+			}
 		}
 
 		void log_context::info(const char* fmt, ...) {
