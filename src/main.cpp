@@ -79,11 +79,11 @@ namespace {
 
 	void update_background() {
 		hills_pos -= 32.0f * DT;
-		if (hills_pos <= -SCR_W)
-			hills_pos += SCR_W;
+		if (hills_pos <= -game.hills.w)
+			hills_pos += game.hills.w;
 		cloud_pos -= 10.0f * DT;
-		if (cloud_pos <= -SCR_W)
-			cloud_pos += SCR_W;
+		if (cloud_pos <= -game.cloud.w)
+			cloud_pos += game.cloud.w;
 	}
 
 	void update_player() {
@@ -116,9 +116,9 @@ namespace {
 
 	void draw_background() {
 		game.bg.draw(game.screen);
-		game.cloud.draw(game.screen, sdl::rect(cloud_pos + SCR_W, SCR_H - game.cloud.h, game.cloud.w, game.cloud.h));
+		game.cloud.draw(game.screen, sdl::rect(cloud_pos + game.cloud.w, SCR_H - game.cloud.h, game.cloud.w, game.cloud.h));
 		game.cloud.draw(game.screen, sdl::rect(cloud_pos, SCR_H - game.cloud.h, game.cloud.w, game.cloud.h));
-		game.hills.draw(game.screen, sdl::rect(hills_pos + SCR_W, SCR_H - game.hills.h, game.hills.w, game.hills.h));
+		game.hills.draw(game.screen, sdl::rect(hills_pos + game.hills.w, SCR_H - game.hills.h, game.hills.w, game.hills.h));
 		game.hills.draw(game.screen, sdl::rect(hills_pos, SCR_H - game.hills.h, game.hills.w, game.hills.h));
 	}
 
