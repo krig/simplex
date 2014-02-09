@@ -1,5 +1,6 @@
 #pragma once
 #include "common.hpp"
+#include "static_vector.hpp"
 
 namespace sdl {
 
@@ -106,6 +107,19 @@ namespace sdl {
 			this->w = w;
 			this->h = h;
 		}
+
+		rect& operator+=(const rect& o) {
+			int x2 = (std::min)(x, o.x);
+			int y2 = (std::min)(y, o.y);
+			int w2 = (std::max)(x + w, o.x + o.w);
+			int h2 = (std::max)(y + h, o.y + o.h);
+			x = x2;
+			y = y2;
+			w = w2 - x2;
+			h = h2 - y2;
+			return *this;
+		}
+
 		SDL_Rect* data() const {
 			return (SDL_Rect*)this;
 		}
@@ -156,8 +170,18 @@ namespace sdl {
 		}
 	};
 
-	struct sprite {
-		void load(screen& s, const char* filename) {
+	struct tileset {
+		tileset() : _texture(0) {
+		}
+
+		~tileset() {
+			if (_texture) {
+				SDL_DestroyTexture(_texture);
+			}
+		}
+
+		void load(screen& s, const char* filename, int tilesize) {
+			this->tilesize = tilesize;
 			SDL_Surface* img = IMG_Load(filename);
 			if (img == nullptr) {
 				throw error("Failed to load %s: %s", filename, SDL_GetError());
@@ -171,77 +195,104 @@ namespace sdl {
 			}
 			LOG_TRACE("%s (%d, %d)", filename, w, h);
 		}
+
+		rect tile(int idx) {
+			int npr = w / tilesize;
+			return rect(tilesize * (idx % npr), tilesize * (idx / npr), tilesize, tilesize);
+		}
+
+		template <size_t N>
+		rect tiles(const util::static_vector<int, N>& idx) {
+			rect r = tile(idx[0]);
+			for (int i = 1; i < N; ++i) {
+				r += tile(idx[i]);
+			}
+			return r;
+		}
+
+		void draw(screen& s, int tileidx, const point& dst) {
+			rect r = tile(tileidx);
+			rect d(dst.x, dst.y, r.w, r.h);
+			SDL_RenderCopy(s.rnd, _texture, r.data(), d.data());
+		}
+
+		void draw(screen& s, int tileidx, const rect& dst) {
+			rect r = tile(tileidx);
+			SDL_RenderCopy(s.rnd, _texture, r.data(), dst.data());
+		}
+
+		void draw_angle(screen& s, int tileidx, const point& dst, double angle, const point* p) {
+			rect r = tile(tileidx);
+			rect d(dst.x, dst.y, r.w, r.h);
+			SDL_RenderCopyEx(s.rnd, _texture, r.data(), d.data(), angle, (const SDL_Point*)p, SDL_FLIP_NONE);
+		}
+
 		void draw(screen& s, const rect& src, const rect& dst) {
 			SDL_RenderCopy(s.rnd, _texture, src.data(), dst.data());
 		}
 
-		void draw(screen& s) {
-			SDL_RenderCopy(s.rnd, _texture, NULL, NULL);
-		}
-
-		void draw(screen& s, const rect& dst) {
-			SDL_RenderCopy(s.rnd, _texture, NULL, dst.data());
-		}
-
-		void draw_angle(screen& s, const rect& dst, double angle, const point* p) {
-			SDL_RenderCopyEx(s.rnd, _texture, NULL, dst.data(),
-			                 angle, (const SDL_Point*)p, SDL_FLIP_NONE);
-		}
-
-		~sprite() {
-			if (_texture) {
-				SDL_DestroyTexture(_texture);
-			}
-		}
 		SDL_Texture* _texture;
 		Uint32 format;
 		int access;
 		int w;
 		int h;
+		int tilesize;
 	};
 
-	struct animated_sprite : public sprite {
-		void init_anim(int frames, int ticks_per_frame) {
-			this->frames = frames;
-			this->ticks_per_frame = ticks_per_frame;
-			dt = 0;
-			currframe = 0;
+	struct animation {
+		enum Type {
+			single_shot,
+			looping
+		};
+
+		enum State {
+			stopped,
+			playing
+		};
+
+		void start() {
+			state = playing;
+			t = 0.0;
 		}
 
-		void update() {
-			dt += 1;
-			if (dt > ticks_per_frame) {
-				dt = 0;
-				currframe += 1;
-				if (currframe >= frames)
-					currframe = 0;
+		void stop() {
+			state = stopped;
+		}
+
+		void update(double dt) {
+			if (state == stopped)
+				return;
+			t += dt;
+			if (t > 1.0 / speed) {
+				idx++;
+				t = 0.0;
+			}
+			if (idx >= (int)frames.size()) {
+				if (type == looping) {
+					idx = 0;
+				}
+				else {
+					idx = frames.size() - 1;
+					state = stopped;
+				}
 			}
 		}
 
-		rect framerect() {
-			int y = frame_h() * currframe;
-			return rect(0, y, w, frame_h());
+		int current() const {
+			return frames[idx];
 		}
 
-		int frame_h() {
-			return h / frames;
-		}
-
-		void draw_angle(screen& s, const rect& dst, double angle, const point* p) {
-			rect f = framerect();
-			SDL_RenderCopyEx(s.rnd, _texture, f.data(), dst.data(),
-			                 angle, (const SDL_Point*)p, SDL_FLIP_NONE);
-		}
-
-		int frames;
-		int currframe;
-		int dt;
-		int ticks_per_frame;
+		std::vector<int> frames;
+		int idx;
+		double speed;
+		double t;
+		Type type;
+		State state;
 	};
 
 	struct numbers {
 		void load(screen& s, const char* filename) {
-			img.load(s, filename);
+			img.load(s, filename, 0);
 		}
 
 		int _count(int number) const {
@@ -271,7 +322,7 @@ namespace sdl {
 			}
 		}
 
-		sprite img;
+		tileset img;
 	};
 
 }

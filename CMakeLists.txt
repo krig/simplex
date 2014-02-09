@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.12)
 project(simplex)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g -Wall -std=c++11")
 include(FindPkgConfig)
 pkg_search_module(SDL2 REQUIRED sdl2)
 # pkg_search_module(SDL2TTF REQUIRED SDL2_ttf)
