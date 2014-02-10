@@ -1,25 +1,29 @@
 #include "common.hpp"
 #include "rand.hpp"
+#include <deque>
+#include <algorithm>
 #include <math.h>
 
 namespace {
-	const float GRAVITY = 9.81f * 0.5f;//1.33f;
-	const float DT = 1.f / 60.f;
+	const float GRAVITY = 9.81f * 0.6f;//1.33f;
+	const double TARGET_FPS = 60.0;
 	const float PI = 3.14159265358979323846f;
 	const float SCR_W = 135.f;
 	const float SCR_H = 240.f;
+	const float GROUND_SPEED = 60.f;
+	const float HILLS_SPEED = 30.f;
+	const float CLOUDS_SPEED = 8.f;
+
+	sdl::tileset* g_tiles;
+	double last_pipe_offset = 0;
 
 	struct Bird {
 		Bird() {
-			x = SCR_W*0.5f;
-			y = SCR_H*0.5f;
-			velocity = 0;
-			pos = 0;
-			alive = true;
+			x = SCR_W*0.33f;
+			revive();
 		}
 
-		void init(sdl::screen& screen, sdl::tileset* tiles) {
-			this->tiles = tiles;
+		void init(sdl::screen& screen) {
 			flight.frames.push_back(0);
 			flight.frames.push_back(1);
 			flight.frames.push_back(2);
@@ -28,10 +32,10 @@ namespace {
 			flight.start();
 		}
 
-		void tick() {
+		void tick(double dt) {
 			pos++;
 
-			velocity -= GRAVITY * DT;
+			velocity -= GRAVITY * dt;
 			if (velocity < -GRAVITY)
 				velocity = -GRAVITY;
 			if (velocity > GRAVITY)
@@ -41,22 +45,22 @@ namespace {
 				flight.speed = 12.f;
 			else
 				flight.speed = 6.f;
-			flight.update(DT);
+			flight.update(dt);
 
 			y -= velocity;
 
-			if (alive && (y > SCR_H - (float)tiles->tilesize)) {
-				//y = SCR_H * 0.5f;
-				velocity = 0.5f * GRAVITY;
-				//velocity = 0.f;
-				//pos = 0;
-				alive = false;
-			}
+			if (alive && (y > SCR_H - (float)g_tiles->tilesize))
+				die();
+		}
+
+		void die() {
+			velocity = 0.5f * GRAVITY;
+			alive = false;
 		}
 
 		void render(sdl::screen& screen) {
-			float w = (float)tiles->tilesize;
-			float h = (float)tiles->tilesize;
+			float w = (float)g_tiles->tilesize;
+			float h = (float)g_tiles->tilesize;
 			float x = this->x - w * 0.5f;
 			float y = this->y - h * 0.5f;
 			float angle = -velocity * 360.f / (PI * 8.f);
@@ -68,29 +72,31 @@ namespace {
 			int frame = flight.current();
 			if (!alive)
 				frame = 3;
-			tiles->draw_angle(screen, frame, sdl::point(x, y), angle, &p);
+			g_tiles->draw_angle(screen, frame, sdl::point(x, y), angle, &p);
 		}
 
-		void jump() {
-			if (!alive) {
-				if (y > SCR_H + (float)tiles->tilesize * 0.5f) {
-					alive = true;
-					y = SCR_H * 0.5f;
-					velocity = 0.f;
-					pos = 0;
-				}
-				return;
-			}
-			if (y > (float)tiles->tilesize * 0.5f)
+		bool flap() {
+			if (!alive)
+				return (y > SCR_H + (float)g_tiles->tilesize * 0.5f);
+			if (y > (float)g_tiles->tilesize * 0.5f)
 				velocity = 0.5f * GRAVITY;
+			return false;
+		}
+
+		void revive() {
+			alive = true;
+			y = SCR_H * 0.5f;
+			velocity = 0.f;
+			pos = 0;
+			num_passed = 0;
 		}
 
 		float x;
 		float y;
 		float velocity;
 		uint32_t pos;
+		int num_passed;
 		bool alive;
-		sdl::tileset* tiles;
 		sdl::animation flight;
 	};
 
@@ -98,77 +104,102 @@ namespace {
 		Background() {
 		}
 
-		void init(sdl::screen& screen, sdl::tileset* tiles) {
-			this->tiles = tiles;
+		void init(sdl::screen& screen) {
 			clouds_pos = 0;
 			hills_pos = 0;
 			ground_pos = 0;
 		}
 
-		void tick() {
-			ground_pos += 42.f * DT;
-			if (ground_pos > (float)tiles->tilesize)
-				ground_pos -= (float)tiles->tilesize;
-			hills_pos += 22.f * DT;
-			if (hills_pos > (float)tiles->tilesize)
-				hills_pos -= (float)tiles->tilesize;
-			clouds_pos += 1.f * DT;
-			if (clouds_pos > (float)tiles->tilesize)
-				clouds_pos -= (float)tiles->tilesize;
+		void tick(double dt) {
+			ground_pos += GROUND_SPEED * dt;
+			if (ground_pos > (float)g_tiles->tilesize)
+				ground_pos -= (float)g_tiles->tilesize;
+			hills_pos += HILLS_SPEED * dt;
+			if (hills_pos > (float)g_tiles->tilesize)
+				hills_pos -= (float)g_tiles->tilesize;
+			clouds_pos += CLOUDS_SPEED * dt;
+			if (clouds_pos > (float)g_tiles->tilesize)
+				clouds_pos -= (float)g_tiles->tilesize;
 		}
 
 		void render(sdl::screen& screen) {
-			tiles->draw(screen, 14, sdl::rect(0, 0, SCR_W, SCR_H));
-			int ntiles = ((int)SCR_W / tiles->tilesize) + 2;
+			g_tiles->draw(screen, 14, sdl::rect(0, 0, SCR_W, SCR_H));
+			int ntiles = ((int)SCR_W / g_tiles->tilesize) + 2;
 			for (int i = 0; i < ntiles; ++i) {
-				tiles->draw(screen, 10, sdl::point((float)(i*tiles->tilesize) - clouds_pos, SCR_H - 2*tiles->tilesize));
+				g_tiles->draw(screen, 10, sdl::point((float)(i*g_tiles->tilesize) - clouds_pos, SCR_H - 2*g_tiles->tilesize));
 			}
 			for (int i = 0; i < ntiles; ++i) {
-				tiles->draw(screen, 8, sdl::point((float)(i*tiles->tilesize) - hills_pos, SCR_H - 2*tiles->tilesize));
-				tiles->draw(screen, 9, sdl::point((float)((i + 1)*tiles->tilesize) - hills_pos, SCR_H - 2*tiles->tilesize));
-				tiles->draw(screen, 13, sdl::point((float)(i*tiles->tilesize) - ground_pos, SCR_H - tiles->tilesize));
+				g_tiles->draw(screen, 8, sdl::point((float)(i*g_tiles->tilesize) - hills_pos, SCR_H - 2*g_tiles->tilesize));
+				g_tiles->draw(screen, 9, sdl::point((float)((i + 1)*g_tiles->tilesize) - hills_pos, SCR_H - 2*g_tiles->tilesize));
+				g_tiles->draw(screen, 13, sdl::point((float)(i*g_tiles->tilesize) - ground_pos, SCR_H - g_tiles->tilesize));
 			}
 		}
 
-		sdl::tileset* tiles;
 		float clouds_pos;
 		float hills_pos;
 		float ground_pos;
 	};
 
-	struct Obstacles {
-		struct Obstacle {
-			double offset;
-			int gap;
-		};
+	const int GAP_HEIGHT = 4;
 
-		Obstacles() {
+	struct Pipe {
+		Pipe() {
+			last_pipe_offset = last_pipe_offset + SCR_W * 0.5f + util::randint() % (int)SCR_W;
+			offset = last_pipe_offset;
+			int total_height = SCR_H / g_tiles->tilesize;
+			gap = 1 + util::randint() % (total_height - 2 - GAP_HEIGHT);
+			passed = 0;
+			outside_screen = false;
 		}
 
-		void init(sdl::screen& screen, sdl::tileset* tiles) {
-			this->tiles = tiles;
-			double last_offset = 120.f;
-			for (size_t i = 0; i < ASIZE(items); ++i) {
-				items[i].offset = last_offset;
-				items[i].gap = util::randint() % 4;
-				last_offset += 80.f + (float)(util::randint() % 120);
-			}
-		}
-
-		void tick() {
+		void tick(double dt) {
+			offset -= GROUND_SPEED * dt;
+			outside_screen = offset < -g_tiles->tilesize;
+			//LOG_TRACE("%f %g", offset, dt);
 		}
 
 		void render(sdl::screen& screen) {
-			for (size_t i = 0; i < ASIZE(items); ++i) {
-				int nblocks = 4;
-				for (int i = 0; i < nblocks; ++i) {
-					//tiles->draw(screen, 4, sdl::point((float)(i*tiles->tilesize) - hills_pos, SCR_H - 2*tiles->tilesize));
-				}
+			if (offset - (float)g_tiles->tilesize > SCR_W || outside_screen)
+				return;
+
+			int total_height = SCR_H / g_tiles->tilesize + 1;
+			int top_height = total_height - gap - GAP_HEIGHT - 2;
+			int bottom_height = gap;
+			// render below gap
+			for (int i = 0; i < bottom_height; ++i) {
+				g_tiles->draw(screen, 4, sdl::point(offset, (top_height + GAP_HEIGHT + i) * g_tiles->tilesize));
+			}
+			// render above gap
+			for (int i = 0; i < top_height; ++i) {
+				g_tiles->draw(screen, 4, sdl::point(offset, i * g_tiles->tilesize));
 			}
 		}
 
-		sdl::tileset* tiles;
-		Obstacle items[4];
+		bool collide(const Bird& bird) {
+			using sdl::rect;
+			float bx = bird.x - (float)g_tiles->tilesize * 0.5f;
+			float by = bird.y - (float)g_tiles->tilesize * 0.5f;
+			if (bx >= offset)
+				passed++;
+			int total_height = SCR_H / g_tiles->tilesize + 1;
+			int top_height = total_height - gap - GAP_HEIGHT - 2;
+			int bottom_height = gap;
+
+			rect top(offset, 0,
+			         g_tiles->tilesize,
+			         top_height * g_tiles->tilesize);
+			rect bottom(offset, (top_height + GAP_HEIGHT) * g_tiles->tilesize,
+			            g_tiles->tilesize,
+			            bottom_height * g_tiles->tilesize);
+			int inset = 4;
+			rect b(bx + inset/2, by + inset/2, g_tiles->tilesize - inset, g_tiles->tilesize - inset);
+			return bottom.has_intersection(b) || top.has_intersection(b);
+		}
+
+		double offset;
+		bool outside_screen;
+		int passed;
+		int gap;
 	};
 
 	struct Flappy {
@@ -179,10 +210,12 @@ namespace {
 		void init() {
 			screen.create((int)SCR_W, (int)SCR_H, 540, 960);
 			tiles.load(screen, "data/birds-tiles.png", 16);
+			g_tiles = &tiles;
 			npass.load(screen, "data/numbers.png");
-			bird.init(screen, &tiles);
-			bg.init(screen, &tiles);
-			obstacles.init(screen, &tiles);
+			bird.init(screen);
+			bg.init(screen);
+
+			reset_game();
 		}
 
 		void handle_event(SDL_Event* e) {
@@ -194,24 +227,55 @@ namespace {
 					running = false;
 				}
 				else if (e->key.keysym.sym == SDLK_SPACE) {
-					bird.jump();
+					if (bird.flap() && !bird.alive) {
+						reset_game();
+						bird.revive();
+					}
 				}
 			}
 		}
 
-		void tick() {
-			bg.tick();
-			obstacles.tick();
-			bird.tick();
+		void reset_game() {
+			pipes.clear();
+			last_pipe_offset = SCR_W;
+			for (int i = 0; i < 2; ++i) {
+				pipes.push_back(Pipe());
+			}
+		}
 
-			// check_collisions
+		void tick(double dt) {
+			if (bird.alive) {
+				bg.tick(dt);
+				for (auto& pipe : pipes)
+					pipe.tick(dt);
+			}
+			bird.tick(dt);
+
+			if (bird.alive) {
+				for (auto& pipe : pipes) {
+					if (pipe.collide(bird)) {
+						bird.die();
+						break;
+					}
+					else if (pipe.passed == 1) {
+						pipe.passed++;
+						bird.num_passed++;
+					}
+				}
+			}
+			if (pipes.front().outside_screen) {
+				last_pipe_offset = pipes.back().offset;
+				pipes.pop_front();
+				pipes.push_back(Pipe());
+			}
 		}
 
 		void render() {
 			bg.render(screen);
-			obstacles.render(screen);
+			for (auto& pipe : pipes)
+				pipe.render(screen);
 			bird.render(screen);
-			npass.draw(screen, 4, sdl::point(SCR_W/2, 20));
+			npass.draw(screen, bird.num_passed, sdl::point(SCR_W/2, 20));
 
 			if (!bird.alive) {
 				tiles.draw(screen, sdl::rect(0, 32, 40, 32),
@@ -226,7 +290,8 @@ namespace {
 		sdl::numbers npass;
 		Bird bird;
 		Background bg;
-		Obstacles obstacles;
+		std::deque<Pipe> pipes;
+		int num_passed;
 		bool running;
 	};
 
@@ -234,17 +299,18 @@ namespace {
 
 	void mainloop() {
 		SDL_Event event;
-		Uint32 counter = 0;
 		game.init();
 		game.render();
+		Uint32 t = 0.0;
 		while (game.running) {
-			counter = SDL_GetTicks();
+			t = SDL_GetTicks();
 			while (SDL_PollEvent(&event)) {
 				game.handle_event(&event);
 			}
-			game.tick();
+			game.tick(1.0 / TARGET_FPS);
 			game.render();
-			sdl::delay_to_fps(counter, (Uint32)(DT * 1000.0));
+			t = SDL_GetTicks() - t;
+			sdl::delay_to_fps(t, (Uint32)(1000.0 / TARGET_FPS));
 		}
 	}
 }

@@ -20,17 +20,14 @@ namespace sdl {
 		char _buf[2048];
 	};
 
-	inline Uint32 delay_to_fps(const Uint32 counter,
-	                           const Uint32 min_ticks_per_frame = (Uint32)((1.0 / 60.0) * 1000.0)) {
-		const Uint32 counter2 = SDL_GetTicks();
-		const Uint32 delta = counter2 - counter;
-		if (delta < min_ticks_per_frame) {//(counter2 > counter) && ((counter2 - counter) < min_ticks_per_frame)) {
+	inline void delay_to_fps(const Uint32 delta,
+	                         const Uint32 min_ticks_per_frame = (Uint32)((1.0 / 60.0) * 1000.0)) {
+		if (delta < min_ticks_per_frame) {
 			SDL_Delay(min_ticks_per_frame - delta);
 		}
 		else {
-			LOG_TRACE("%u / %u", counter2 - counter, min_ticks_per_frame);
+			LOG_TRACE("%u / %u", delta, min_ticks_per_frame);
 		}
-		return counter2;
 	}
 
 
@@ -106,6 +103,10 @@ namespace sdl {
 			this->y = y;
 			this->w = w;
 			this->h = h;
+		}
+
+		bool has_intersection(const rect& r) {
+			return SDL_HasIntersection(data(), r.data());
 		}
 
 		rect& operator+=(const rect& o) {
