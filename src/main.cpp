@@ -210,7 +210,7 @@ namespace {
 		}
 
 		void init() {
-			screen.create((int)SCR_W, (int)SCR_H, 540, 960);
+			screen.create("flappy bricks", (int)SCR_W, (int)SCR_H, 540, 960);
 
 			Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 1, 512);
 			Mix_AllocateChannels(3);

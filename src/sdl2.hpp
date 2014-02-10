@@ -146,8 +146,8 @@ namespace sdl {
 		SDL_Window* window;
 		SDL_Renderer* rnd;
 
-		void create(int w, int h, int winw, int winh) {
-			window = SDL_CreateWindow("simplex",
+		void create(const char* title, int w, int h, int winw, int winh) {
+			window = SDL_CreateWindow(title,
 			                          SDL_WINDOWPOS_UNDEFINED,
 			                          SDL_WINDOWPOS_UNDEFINED,
 			                          winw,
@@ -194,7 +194,6 @@ namespace sdl {
 			if (SDL_QueryTexture(_texture, &format, &access, &w, &h) < 0) {
 				throw error("Failed to load %s: %s", filename, SDL_GetError());
 			}
-			LOG_TRACE("%s (%d, %d)", filename, w, h);
 		}
 
 		rect tile(int idx) {
