@@ -5,14 +5,18 @@
 #include <math.h>
 
 namespace {
-	const float GRAVITY = 9.81f * 0.6f;//1.33f;
+	const float GRAVITY = 10.f;//1.33f;
+	const float FLAP_FORCE = 3.666f;
 	const double TARGET_FPS = 60.0;
 	const float PI = 3.14159265358979323846f;
 	const float SCR_W = 135.f;
 	const float SCR_H = 240.f;
-	const float GROUND_SPEED = 60.f;
+	const float GROUND_SPEED = 90.f;
 	const float HILLS_SPEED = 30.f;
 	const float CLOUDS_SPEED = 8.f;
+	const int GAP_HEIGHT = 4;
+	const float MIN_PIPE_DIST = SCR_W * 0.75f;
+	const float RND_PIPE_DIST = SCR_W;
 
 	sdl::tileset* g_tiles;
 	double last_pipe_offset = 0;
@@ -33,13 +37,12 @@ namespace {
 		}
 
 		void tick(double dt) {
-			pos++;
-
 			velocity -= GRAVITY * dt;
 			if (velocity < -GRAVITY)
 				velocity = -GRAVITY;
 			if (velocity > GRAVITY)
 				velocity = GRAVITY;
+			y -= velocity;
 
 			if (velocity >= 0.f)
 				flight.speed = 12.f;
@@ -47,14 +50,13 @@ namespace {
 				flight.speed = 6.f;
 			flight.update(dt);
 
-			y -= velocity;
 
 			if (alive && (y > SCR_H - (float)g_tiles->tilesize))
 				die();
 		}
 
 		void die() {
-			velocity = 0.5f * GRAVITY;
+			velocity = FLAP_FORCE;
 			alive = false;
 		}
 
@@ -79,7 +81,7 @@ namespace {
 			if (!alive)
 				return (y > SCR_H + (float)g_tiles->tilesize * 0.5f);
 			if (y > (float)g_tiles->tilesize * 0.5f)
-				velocity = 0.5f * GRAVITY;
+				velocity = FLAP_FORCE;
 			return false;
 		}
 
@@ -87,14 +89,12 @@ namespace {
 			alive = true;
 			y = SCR_H * 0.5f;
 			velocity = 0.f;
-			pos = 0;
 			num_passed = 0;
 		}
 
 		float x;
 		float y;
 		float velocity;
-		uint32_t pos;
 		int num_passed;
 		bool alive;
 		sdl::animation flight;
@@ -140,11 +140,9 @@ namespace {
 		float ground_pos;
 	};
 
-	const int GAP_HEIGHT = 4;
-
 	struct Pipe {
 		Pipe() {
-			last_pipe_offset = last_pipe_offset + SCR_W * 0.5f + util::randint() % (int)SCR_W;
+			last_pipe_offset = last_pipe_offset + MIN_PIPE_DIST + util::randint() % (int)RND_PIPE_DIST;
 			offset = last_pipe_offset;
 			int total_height = SCR_H / g_tiles->tilesize;
 			gap = 1 + util::randint() % (total_height - 2 - GAP_HEIGHT);
@@ -185,9 +183,9 @@ namespace {
 			int top_height = total_height - gap - GAP_HEIGHT - 2;
 			int bottom_height = gap;
 
-			rect top(offset, 0,
+			rect top(offset, -SCR_H,
 			         g_tiles->tilesize,
-			         top_height * g_tiles->tilesize);
+			         SCR_H + top_height * g_tiles->tilesize);
 			rect bottom(offset, (top_height + GAP_HEIGHT) * g_tiles->tilesize,
 			            g_tiles->tilesize,
 			            bottom_height * g_tiles->tilesize);
@@ -207,8 +205,22 @@ namespace {
 			running = true;
 		}
 
+		~Flappy() {
+			Mix_FreeChunk(sfxflap);
+			Mix_FreeChunk(sfxgate);
+			Mix_FreeChunk(sfxfail);
+		}
+
 		void init() {
 			screen.create((int)SCR_W, (int)SCR_H, 540, 960);
+
+			Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 1, 512);
+			Mix_AllocateChannels(3);
+
+			sfxflap = Mix_LoadWAV("data/flap.wav");
+			sfxgate = Mix_LoadWAV("data/gate.wav");
+			sfxfail = Mix_LoadWAV("data/fail.wav");
+
 			tiles.load(screen, "data/birds-tiles.png", 16);
 			g_tiles = &tiles;
 			npass.load(screen, "data/numbers.png");
@@ -216,6 +228,18 @@ namespace {
 			bg.init(screen);
 
 			reset_game();
+		}
+
+		void play_flap() {
+			Mix_PlayChannel(0, sfxflap, 0);
+		}
+
+		void play_gate() {
+			Mix_PlayChannel(1, sfxgate, 0);
+		}
+
+		void play_fail() {
+			Mix_PlayChannel(2, sfxfail, 0);
 		}
 
 		void handle_event(SDL_Event* e) {
@@ -231,6 +255,9 @@ namespace {
 						reset_game();
 						bird.revive();
 					}
+					else if (bird.alive) {
+						play_flap();
+					}
 				}
 			}
 		}
@@ -244,6 +271,7 @@ namespace {
 		}
 
 		void tick(double dt) {
+			bool was_alive = bird.alive;
 			if (bird.alive) {
 				bg.tick(dt);
 				for (auto& pipe : pipes)
@@ -251,15 +279,20 @@ namespace {
 			}
 			bird.tick(dt);
 
+			if (was_alive && !bird.alive)
+				play_fail();
+
 			if (bird.alive) {
 				for (auto& pipe : pipes) {
 					if (pipe.collide(bird)) {
 						bird.die();
+						play_fail();
 						break;
 					}
 					else if (pipe.passed == 1) {
 						pipe.passed++;
 						bird.num_passed++;
+						play_gate();
 					}
 				}
 			}
@@ -288,6 +321,11 @@ namespace {
 		sdl::screen screen;
 		sdl::tileset tiles;
 		sdl::numbers npass;
+
+		Mix_Chunk* sfxflap;
+		Mix_Chunk* sfxgate;
+		Mix_Chunk* sfxfail;
+
 		Bird bird;
 		Background bg;
 		std::deque<Pipe> pipes;
