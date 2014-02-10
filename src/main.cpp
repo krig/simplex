@@ -79,10 +79,14 @@ namespace {
 
 		bool flap() {
 			if (!alive)
-				return (y > SCR_H + (float)g_tiles->tilesize * 0.5f);
+				return can_revive();
 			if (y > (float)g_tiles->tilesize * 0.5f)
 				velocity = FLAP_FORCE;
 			return false;
+		}
+
+		bool can_revive() {
+			return y > SCR_H + (float)g_tiles->tilesize * 0.5f;
 		}
 
 		void revive() {
@@ -307,6 +311,18 @@ namespace {
 			if (!bird.alive) {
 				tiles.draw(screen, sdl::rect(0, 32, 40, 32),
 				           sdl::rect(SCR_W*0.5f - 20, SCR_H*0.5f - 16, 40, 32));
+
+				if (bird.can_revive()) {
+					int BLINK_FREQ = TARGET_FPS;
+					ready_blink++;
+					if (ready_blink < BLINK_FREQ/2) {
+						tiles.draw(screen, sdl::rect(48, 32, 58, 12),
+						           sdl::rect(SCR_W*0.5f - 29, SCR_H*0.5f + 32, 58, 12));
+					}
+					if (ready_blink > BLINK_FREQ) {
+						ready_blink = 0;
+					}
+				}
 			}
 
 			screen.present();
@@ -324,6 +340,7 @@ namespace {
 		Background bg;
 		std::deque<Pipe> pipes;
 		int num_passed;
+		int ready_blink;
 		bool running;
 	};
 
