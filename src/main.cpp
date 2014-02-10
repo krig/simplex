@@ -205,21 +205,15 @@ namespace {
 			running = true;
 		}
 
-		~Flappy() {
-			Mix_FreeChunk(sfxflap);
-			Mix_FreeChunk(sfxgate);
-			Mix_FreeChunk(sfxfail);
-		}
-
 		void init() {
 			screen.create((int)SCR_W, (int)SCR_H, 540, 960);
 
 			Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 1, 512);
 			Mix_AllocateChannels(3);
 
-			sfxflap = Mix_LoadWAV("data/flap.wav");
-			sfxgate = Mix_LoadWAV("data/gate.wav");
-			sfxfail = Mix_LoadWAV("data/fail.wav");
+			sfxflap.load("data/flap.wav");
+			sfxgate.load("data/gate.wav");
+			sfxfail.load("data/fail.wav");
 
 			tiles.load(screen, "data/birds-tiles.png", 16);
 			g_tiles = &tiles;
@@ -231,15 +225,15 @@ namespace {
 		}
 
 		void play_flap() {
-			Mix_PlayChannel(0, sfxflap, 0);
+			sfxflap.play(0);
 		}
 
 		void play_gate() {
-			Mix_PlayChannel(1, sfxgate, 0);
+			sfxgate.play(1);
 		}
 
 		void play_fail() {
-			Mix_PlayChannel(2, sfxfail, 0);
+			sfxfail.play(2);
 		}
 
 		void handle_event(SDL_Event* e) {
@@ -322,9 +316,9 @@ namespace {
 		sdl::tileset tiles;
 		sdl::numbers npass;
 
-		Mix_Chunk* sfxflap;
-		Mix_Chunk* sfxgate;
-		Mix_Chunk* sfxfail;
+		sdl::sfx sfxflap;
+		sdl::sfx sfxgate;
+		sdl::sfx sfxfail;
 
 		Bird bird;
 		Background bg;

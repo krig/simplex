@@ -326,4 +326,24 @@ namespace sdl {
 		tileset img;
 	};
 
+	struct sfx {
+		sfx() : _chunk(0) {
+		}
+
+		~sfx() {
+			if (_chunk)
+				Mix_FreeChunk(_chunk);
+		}
+
+		void load(const char* filename) {
+			_chunk = Mix_LoadWAV(filename);
+		}
+
+		void play(int channel) {
+			Mix_PlayChannel(channel, _chunk, 0);
+		}
+
+		Mix_Chunk* _chunk;
+	};
+
 }
