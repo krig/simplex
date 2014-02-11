@@ -345,4 +345,24 @@ namespace sdl {
 		Mix_Chunk* _chunk;
 	};
 
+	struct music {
+		music() : _music(0) {
+		}
+
+		~music() {
+			if (_music)
+				Mix_FreeMusic(_music);
+		}
+
+		void load(const char* filename) {
+			_music = Mix_LoadMUS(filename);
+		}
+
+		void play() {
+			Mix_FadeInMusic(_music, -1, 200);
+		}
+
+		Mix_Music* _music;
+	};
+
 }

@@ -219,6 +219,7 @@ namespace {
 			sfxflap.load("data/flap.wav");
 			sfxgate.load("data/gate.wav");
 			sfxfail.load("data/fail.wav");
+			beardsong.load("data/beardsong.ogg");
 
 			tiles.load(screen, "data/birds-tiles.png", 16);
 			g_tiles = &tiles;
@@ -227,6 +228,8 @@ namespace {
 			bg.init(screen);
 
 			reset_game();
+
+			beardsong.play();
 		}
 
 		void play_flap() {
@@ -336,6 +339,7 @@ namespace {
 		sdl::sfx sfxflap;
 		sdl::sfx sfxgate;
 		sdl::sfx sfxfail;
+		sdl::music beardsong;
 
 		Bird bird;
 		Background bg;
