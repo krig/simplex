@@ -1,4 +1,4 @@
-# flappy bricks
+# flappy beard
 
 Just another Flappy Birds-clone, made just for fun. All content from scratch.
 
