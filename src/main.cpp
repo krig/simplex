@@ -5,13 +5,14 @@
 #include <math.h>
 
 namespace {
-	const float GRAVITY = 10.f;//1.33f;
-	const float FLAP_FORCE = 3.666f;
+	const float GRAVITY = 15.f;//1.33f;
+	const float FLAP_FORCE = 4.666f;
 	const double TARGET_FPS = 60.0;
 	const float PI = 3.14159265358979323846f;
 	const float SCR_W = 135.f;
 	const float SCR_H = 240.f;
-	const float GROUND_SPEED = 90.f;
+	const float BIRD_POS = SCR_W*0.25f;
+	const float GROUND_SPEED = 120.f;
 	const float HILLS_SPEED = 30.f;
 	const float CLOUDS_SPEED = 8.f;
 	const int GAP_HEIGHT = 4;
@@ -23,7 +24,7 @@ namespace {
 
 	struct Bird {
 		Bird() {
-			x = SCR_W*0.33f;
+			x = BIRD_POS;
 			revive();
 		}
 
@@ -350,16 +351,18 @@ namespace {
 		SDL_Event event;
 		game.init();
 		game.render();
-		Uint32 t = 0.0;
+		Uint64 t = 0.0;
+		Uint64 freq = SDL_GetPerformanceFrequency() / (Uint64)1000;
 		while (game.running) {
-			t = SDL_GetTicks();
+			t = SDL_GetPerformanceCounter();
 			while (SDL_PollEvent(&event)) {
 				game.handle_event(&event);
 			}
 			game.tick(1.0 / TARGET_FPS);
 			game.render();
-			t = SDL_GetTicks() - t;
-			sdl::delay_to_fps(t, (Uint32)(1000.0 / TARGET_FPS));
+			t = SDL_GetPerformanceCounter() - t;
+			Uint64 ms = t / freq;
+			sdl::delay_to_fps((Uint32)ms, (Uint32)(1000.0 / TARGET_FPS));
 		}
 	}
 }
