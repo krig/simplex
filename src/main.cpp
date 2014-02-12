@@ -355,6 +355,53 @@ namespace {
 		SDL_Event event;
 		game.init();
 		game.render();
+
+		// http://gafferongames.com/game-physics/fix-your-timestep/
+		double t = 0.0;
+		const double dt = 1.0 / TARGET_FPS;
+
+		const double freq = 1.0 / (double)SDL_GetPerformanceFrequency();
+
+		double currentTime = (double)SDL_GetPerformanceCounter() * freq;
+		double accumulator = 0.0;
+
+		//State previous;
+		//State current;
+
+		while (game.running) {
+			double newTime = (double)SDL_GetPerformanceCounter() * freq;
+			double frameTime = newTime - currentTime;
+			if ( frameTime > 0.25 ) {
+				LOG_TRACE("eh %g (%g)", frameTime, accumulator);
+				frameTime = 0.25;	  // note: max frame time to avoid spiral of death
+			}
+			currentTime = newTime;
+
+			accumulator += frameTime;
+
+			while (accumulator >= dt) {
+				//previousState = currentState;
+				//integrate( currentState, t, dt );
+				while (SDL_PollEvent(&event)) {
+					game.handle_event(&event);
+				}
+				game.tick(dt);
+
+				t += dt;
+				accumulator -= dt;
+			}
+
+			//const double alpha = accumulator / dt;
+
+			game.render();
+			//State state = currentState*alpha + previousState * ( 1.0 - alpha );
+
+			//render( state );
+		}
+/*
+		SDL_Event event;
+		game.init();
+		game.render();
 		Uint64 t = 0.0;
 		Uint64 freq = SDL_GetPerformanceFrequency() / (Uint64)1000;
 		while (game.running) {
@@ -368,6 +415,7 @@ namespace {
 			Uint64 ms = t / freq;
 			sdl::delay_to_fps((Uint32)ms, (Uint32)(1000.0 / TARGET_FPS));
 		}
+*/
 	}
 }
 

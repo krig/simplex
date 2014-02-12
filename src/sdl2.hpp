@@ -156,9 +156,8 @@ namespace sdl {
 			if (window == nullptr) {
 				throw error("%s", SDL_GetError());
 			}
-			// | SDL_RENDERER_PRESENTVSYNC
 			rnd = SDL_CreateRenderer(window, -1,
-			                         SDL_RENDERER_ACCELERATED);
+			                         SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 			if (rnd == nullptr){
 				throw error("%s", SDL_GetError());
 			}
