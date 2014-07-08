@@ -1,48 +1,27 @@
 #include "common.hpp"
 #include "rand.hpp"
+#include "shaders.hpp"
 #include <deque>
 #include <algorithm>
-#include <math.h>
+#include <array>
+#include "world.hpp"
+#include "geo.hpp"
 
 namespace {
 	const double TARGET_FPS = 120.0;
 	const float PI = 3.14159265358979323846f;
-	const int SCR_W = 920;
-	const int SCR_H = 480;
-	const int CHUNK_SIZE = 16;
-	const int INITIAL_CHUNK_CACHE_SIZE_MB = 64;
+	const int SCR_W = 1000;
+	const int SCR_H = 600;
 
-	struct Player {
-		double x, y, z;
-	};
+	constexpr float deg2rad(float deg) {
+		return (deg / 360.f) * 2.f * PI;
+	}
 
-	typedef uint8_t Block;
 
-	// for 16^3 chunks and 1 byte/voxel = 16k chunks in cache if 64MB chunk cache
-	const int INITIAL_CHUNK_CACHE_SIZE = (INITIAL_CHUNK_CACHE_SIZE_MB * 1024 * 1024)
-		/ (sizeof(Block) * CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE);
-
-	struct Chunk {
-		uint32_t id;
-		int16_t x, y, z;
-		uint16_t flags;
-		// voxel data for chunk
-		Block blocks[CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE];
-	};
-
-	// the chunk cache has a maximum size
-	// and background loader threads
-	struct ChunkCache {
-		Chunk cache[INITIAL_CHUNK_CACHE_SIZE];
-	};
-
-	struct World {
-		uint64_t seed;
-	};
-
-	struct Game {
-		Game() {
+	struct game {
+		game() {
 			running = true;
+			wireframe_mode = false;
 		}
 
 		void init() {
@@ -54,6 +33,7 @@ namespace {
 			SDL_SetRelativeMouseMode(SDL_TRUE);
 
 			init_gl();
+			load_shaders();
 		}
 
 		void init_gl() {
@@ -61,24 +41,38 @@ namespace {
 			glEnable(GL_CULL_FACE);
 			glLogicOp(GL_INVERT);
 			glEnable(GL_DEPTH_TEST);
-			glDepthFunc(GL_LEQUAL);
+			glDepthFunc(GL_LESS);
+			glCullFace(GL_BACK);
 			glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 			glClearColor(0.f, 0.f, 0.f, 0.f);
 			glClearDepth(1.f);
 
 			generate_sky();
+
+			make_cube();
+
+			camera.look_at(glm::vec3(2,2,5), glm::vec3(0,0,0));
+		}
+
+		void load_shaders() {
+			basic_shader = load_program("data/basic.vsh", "data/basic.fsh");
 		}
 
 		void handle_event(SDL_Event* e) {
 			if (e->type == SDL_QUIT) {
 				running = false;
 			} else if (e->type == SDL_KEYDOWN) {
-				running  = false;
+				if (e->key.keysym.sym == SDLK_w) {
+					wireframe_mode = !wireframe_mode;
+				}
+				else if (e->key.keysym.sym == SDLK_ESCAPE) {
+					running  = false;
+				}
 			}
 		}
 
 		int mouse_dx, mouse_dy;
-		Uint32 mouse_buttons;
+		uint32_t mouse_buttons;
 
 		void tick(double dt) {
 			mouse_buttons = SDL_GetRelativeMouseState(&mouse_dx, &mouse_dy);
@@ -87,18 +81,53 @@ namespace {
 
 		void render() {
 			sdl::point sz = screen.get_size();
+			glm::mat4 proj = glm::perspective<float>(deg2rad(50.f), (float)sz.x/(float)sz.y, 0.1, 100.0);
 			glViewport(0, 0, sz.x, sz.y);
 			glClearColor(0.2f, 0.2f, 0.2f, 0.0f);
 			glClearDepth(1.f);
 			glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
+			glPolygonMode(GL_FRONT, wireframe_mode ? GL_LINE : GL_FILL);
+
 			render_sky();
 
 			glClear(GL_DEPTH_BUFFER_BIT);
 
+			render_cube(proj);
+
 			screen.present();
 
 			SDL_WarpMouseInWindow(screen.window, sz.x >> 1, sz.y >> 1);
+		}
+
+		void make_cube() {
+			cube_vao = make_vao();
+			cube_verts = make_cube_vertices(glm::vec3(1.f, 1.f, 1.f));
+			bind_vao(cube_vao);
+			cube_vbo = make_vbo();
+			fill_static_vbo(cube_vbo, cube_verts);
+			glVertexAttribPointer(0u, 3, GL_FLOAT, GL_FALSE, 5*sizeof(float), 0);
+			glVertexAttribPointer(1u, 2, GL_FLOAT, GL_TRUE, 5*sizeof(float), (const GLvoid*)(3 * sizeof(GLfloat)));
+			a = 0.f;
+		}
+
+		GLuint cube_vao, cube_vbo;
+		float a, b, c;
+
+		void render_cube(const glm::mat4& proj) {
+			glm::mat4 cube_pos;
+			cube_pos = glm::translate(glm::vec3(sinf(a), cosf(b), sinf(c)));
+			cube_pos *= glm::rotate(a*0.3f, glm::vec3(0.f, 1.f, 0.f));
+			a += 0.04f, b += 0.02f, c += 0.03f;
+			basic_shader->use();
+			basic_shader->uniform("projection", proj);
+			basic_shader->uniform("camera", camera.pos);
+			basic_shader->uniform("object", cube_pos);
+			bind_vao(cube_vao);
+			glEnableVertexAttribArray(0);
+			glEnableVertexAttribArray(1);
+			glVertexAttrib3f(1u, 0.0, 0.5, 1.0);
+			glDrawArrays(GL_TRIANGLES, 0, 6 * 2 * 3);
 		}
 
 		void generate_sky() {
@@ -108,14 +137,18 @@ namespace {
 		}
 
 		sdl::screen screen;
-
+		std::unique_ptr<shader_program> basic_shader;
+		thing player;
+		thing camera;
+		std::vector<cube_vert> cube_verts;
+		bool wireframe_mode;
 		bool running;
-	} game;
+	} the_game;
 
 	void mainloop() {
 		SDL_Event event;
-		game.init();
-		game.render();
+		the_game.init();
+		the_game.render();
 
 		// http://gafferongames.com/game-physics/fix-your-timestep/
 		double t = 0.0;
@@ -123,28 +156,28 @@ namespace {
 
 		const double freq = 1.0 / (double)SDL_GetPerformanceFrequency();
 
-		double currentTime = (double)SDL_GetPerformanceCounter() * freq;
+		double current_time = (double)SDL_GetPerformanceCounter() * freq;
 		double accumulator = 0.0;
 
-		while (game.running) {
-			double newTime = (double)SDL_GetPerformanceCounter() * freq;
-			double frameTime = newTime - currentTime;
-			if ( frameTime > 0.25 ) {
-				LOG_TRACE("eh %g (%g)", frameTime, accumulator);
-				frameTime = 0.25;	  // note: max frame time to avoid spiral of death
+		while (the_game.running) {
+			double new_time = (double)SDL_GetPerformanceCounter() * freq;
+			double frame_time = new_time - current_time;
+			if ( frame_time > 0.25 ) {
+				LOG_TRACE("not good %g (%g)", frame_time, accumulator);
+				frame_time = 0.25;	  // note: max frame time to avoid spiral of death
 			}
-			currentTime = newTime;
-			accumulator += frameTime;
+			current_time = new_time;
+			accumulator += frame_time;
 			while (accumulator >= dt) {
 				while (SDL_PollEvent(&event)) {
-					game.handle_event(&event);
+					the_game.handle_event(&event);
 				}
-				game.tick(dt);
+				the_game.tick(dt);
 
 				t += dt;
 				accumulator -= dt;
 			}
-			game.render();
+			the_game.render();
 		}
 	}
 }
