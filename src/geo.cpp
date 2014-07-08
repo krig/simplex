@@ -20,52 +20,52 @@ std::vector<cube_vert> make_cube_vertices(const glm::vec3& size) {
 
 	std::vector<cube_vert> verts = {
 		// bottom
-		{ corners[0], { 0.f, 0.f } },
-		{ corners[1], { 1.f, 0.f } },
-		{ corners[2], { 0.f, 1.f } },
-		{ corners[1], { 1.f, 0.f } },
-		{ corners[3], { 1.f, 1.f } },
-		{ corners[2], { 0.f, 1.f } },
+		{ corners[0], { 0.f, -1.f, 0.f } },
+		{ corners[1], { 0.f, -1.f, 0.f } },
+		{ corners[2], { 0.f, -1.f, 0.f } },
+		{ corners[1], { 1.f, -1.f, 0.f } },
+		{ corners[3], { 1.f, -1.f, 0.f } },
+		{ corners[2], { 0.f, -1.f, 0.f } },
 
 		// top
-		{ corners[4], { 0.f, 0.f } },
-		{ corners[5], { 0.f, 1.f } },
-		{ corners[6], { 1.f, 0.f } },
-		{ corners[6], { 1.f, 0.f } },
-		{ corners[5], { 0.f, 1.f } },
-		{ corners[7], { 1.f, 1.f } },
+		{ corners[4], { 0.f, 1.f, 0.f } },
+		{ corners[5], { 0.f, 1.f, 0.f } },
+		{ corners[6], { 0.f, 1.f, 0.f } },
+		{ corners[6], { 0.f, 1.f, 0.f } },
+		{ corners[5], { 0.f, 1.f, 0.f } },
+		{ corners[7], { 0.f, 1.f, 0.f } },
 
 		// front
-		{ corners[2], { 1.f, 0.f } },
-		{ corners[3], { 0.f, 0.f } },
-		{ corners[5], { 1.f, 1.f } },
-		{ corners[3], { 0.f, 0.f } },
-		{ corners[7], { 0.f, 1.f } },
-		{ corners[5], { 1.f, 1.f } },
+		{ corners[2], { 0.f, 0.f, 1.f } },
+		{ corners[3], { 0.f, 0.f, 1.f } },
+		{ corners[5], { 0.f, 0.f, 1.f } },
+		{ corners[3], { 0.f, 0.f, 1.f } },
+		{ corners[7], { 0.f, 0.f, 1.f } },
+		{ corners[5], { 0.f, 0.f, 1.f } },
 
 		// back
-		{ corners[0], { 0.f, 0.f } },
-		{ corners[4], { 0.f, 1.f } },
-		{ corners[1], { 1.f, 0.f } },
-		{ corners[1], { 1.f, 0.f } },
-		{ corners[4], { 0.f, 1.f } },
-		{ corners[6], { 1.f, 1.f } },
+		{ corners[0], { 0.f, 0.f,-1.f } },
+		{ corners[4], { 0.f, 0.f,-1.f } },
+		{ corners[1], { 0.f, 0.f,-1.f } },
+		{ corners[1], { 0.f, 0.f,-1.f } },
+		{ corners[4], { 0.f, 0.f,-1.f } },
+		{ corners[6], { 0.f, 0.f,-1.f } },
 
 		// left
-		{ corners[2], { 0.f, 1.f } },
-		{ corners[4], { 1.f, 0.f } },
-		{ corners[0], { 0.f, 0.f } },
-		{ corners[2], { 0.f, 1.f } },
-		{ corners[5], { 1.f, 1.f } },
-		{ corners[4], { 1.f, 0.f } },
+		{ corners[2], {-1.f, 0.f, 0.f } },
+		{ corners[4], {-1.f, 0.f, 0.f } },
+		{ corners[0], {-1.f, 0.f, 0.f } },
+		{ corners[2], {-1.f, 0.f, 0.f } },
+		{ corners[5], {-1.f, 0.f, 0.f } },
+		{ corners[4], {-1.f, 0.f, 0.f } },
 
 		// right
-		{ corners[3], { 1.f, 1.f } },
-		{ corners[1], { 1.f, 0.f } },
-		{ corners[6], { 0.f, 0.f } },
-		{ corners[3], { 1.f, 1.f } },
-		{ corners[6], { 0.f, 0.f } },
-		{ corners[7], { 0.f, 1.f } },
+		{ corners[3], { 1.f, 0.f, 0.f } },
+		{ corners[1], { 1.f, 0.f, 0.f } },
+		{ corners[6], { 1.f, 0.f, 0.f } },
+		{ corners[3], { 1.f, 0.f, 0.f } },
+		{ corners[6], { 1.f, 0.f, 0.f } },
+		{ corners[7], { 1.f, 0.f, 0.f } },
 	};
 
 	return verts;

@@ -1,14 +1,14 @@
 #version 130
 
 uniform mat4 projection;
-uniform mat4 camera;
-uniform mat4 object;
+uniform mat4 view;
+uniform mat4 model;
 
 in vec3 position;
-in vec2 in_color;
-out vec3 out_color;
+in vec3 in_normal;
+out vec3 out_normal;
 
 void main(){
-	gl_Position = projection * camera * object * vec4(position, 1.0);
-	out_color = vec3(in_color, 0.222);
+	gl_Position = projection * view * model * vec4(position, 1.0);
+	out_normal = (model * vec4(in_normal, 0.0)).xyz;
 }

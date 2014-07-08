@@ -106,8 +106,8 @@ namespace {
 			bind_vao(cube_vao);
 			cube_vbo = make_vbo();
 			fill_static_vbo(cube_vbo, cube_verts);
-			glVertexAttribPointer(0u, 3, GL_FLOAT, GL_FALSE, 5*sizeof(float), 0);
-			glVertexAttribPointer(1u, 2, GL_FLOAT, GL_TRUE, 5*sizeof(float), (const GLvoid*)(3 * sizeof(GLfloat)));
+			glVertexAttribPointer(0u, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), 0);
+			glVertexAttribPointer(1u, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (const GLvoid*)(3 * sizeof(GLfloat)));
 			a = 0.f;
 		}
 
@@ -121,12 +121,11 @@ namespace {
 			a += 0.04f, b += 0.02f, c += 0.03f;
 			basic_shader->use();
 			basic_shader->uniform("projection", proj);
-			basic_shader->uniform("camera", camera.pos);
-			basic_shader->uniform("object", cube_pos);
+			basic_shader->uniform("view", camera.pos);
+			basic_shader->uniform("model", cube_pos);
 			bind_vao(cube_vao);
 			glEnableVertexAttribArray(0);
 			glEnableVertexAttribArray(1);
-			glVertexAttrib3f(1u, 0.0, 0.5, 1.0);
 			glDrawArrays(GL_TRIANGLES, 0, 6 * 2 * 3);
 		}
 
