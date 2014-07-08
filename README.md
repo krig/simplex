@@ -1,6 +1,6 @@
-# flappy beard
+# simplex
 
-Just another Flappy Birds-clone, made just for fun. All content from scratch.
+Time to get back into GL. 3D, procedural, that's the idea at least.
 
 Runs in Linux, requires SDL2.
 

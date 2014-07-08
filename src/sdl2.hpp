@@ -152,7 +152,7 @@ namespace sdl {
 			                          SDL_WINDOWPOS_UNDEFINED,
 			                          winw,
 			                          winh,
-			                          0);
+			                          SDL_WINDOW_OPENGL);
 			if (window == nullptr) {
 				throw error("%s", SDL_GetError());
 			}
@@ -161,12 +161,24 @@ namespace sdl {
 			if (rnd == nullptr){
 				throw error("%s", SDL_GetError());
 			}
+			SDL_RendererInfo info;
+			SDL_GetRendererInfo(rnd, &info);
+			if ((info.flags & SDL_RENDERER_ACCELERATED) == 0 ||
+			    (info.flags & SDL_RENDERER_TARGETTEXTURE) == 0) {
+				throw error("No GL available");
+			}
 			SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest");
 			SDL_RenderSetLogicalSize(rnd, w, h);
 		}
 
 		void present() {
 			SDL_RenderPresent(rnd);
+		}
+
+		point get_size() {
+			point sz;
+			SDL_GetWindowSize(window, &sz.x, &sz.y);
+			return sz;
 		}
 	};
 
