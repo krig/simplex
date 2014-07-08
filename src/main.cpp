@@ -33,7 +33,7 @@ namespace {
 	// the chunk cache has a maximum size
 	// and background loader threads
 	struct ChunkCache {
-		Chunk cache[CHUNK_CACHE_SIZE];
+		Chunk cache[INITIAL_CHUNK_CACHE_SIZE];
 	};
 
 	struct World {

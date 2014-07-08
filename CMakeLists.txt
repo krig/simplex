@@ -13,8 +13,12 @@ include_directories(${SDL2IMG_INCLUDE_DIRS})
 include_directories(${SDL2MIX_INCLUDE_DIRS})
 include_directories(${OPENGL_INCLUDE_DIRS})
 
+include_directories(lib/glew/include)
+include_directories(lib/stb)
+include_directories(lib/glm)
+
 include_directories("src")
-file(GLOB_RECURSE sources "src/*.cpp" "src/*.c")
+file(GLOB_RECURSE sources "src/*.cpp" "src/*.c" "lib/glew/src/glew.c")
 add_executable(simplex ${sources}) 
 target_link_libraries(simplex ${SDL2_LIBRARIES})
 # target_link_libraries(simplex ${SDL2TTF_LIBRARIES})
