@@ -144,7 +144,6 @@ namespace sdl {
 
 	struct screen {
 		SDL_Window* window;
-		SDL_Renderer* rnd;
 
 		void create(const char* title, int w, int h, int winw, int winh) {
 			window = SDL_CreateWindow(title,
@@ -156,23 +155,11 @@ namespace sdl {
 			if (window == nullptr) {
 				throw error("%s", SDL_GetError());
 			}
-			rnd = SDL_CreateRenderer(window, -1,
-			                         SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-			if (rnd == nullptr){
-				throw error("%s", SDL_GetError());
-			}
-			SDL_RendererInfo info;
-			SDL_GetRendererInfo(rnd, &info);
-			if ((info.flags & SDL_RENDERER_ACCELERATED) == 0 ||
-			    (info.flags & SDL_RENDERER_TARGETTEXTURE) == 0) {
-				throw error("No GL available");
-			}
-			SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest");
-			SDL_RenderSetLogicalSize(rnd, w, h);
+			SDL_GL_CreateContext(window);
 		}
 
 		void present() {
-			SDL_RenderPresent(rnd);
+			SDL_GL_SwapWindow(window);
 		}
 
 		point get_size() {
@@ -182,73 +169,6 @@ namespace sdl {
 		}
 	};
 
-	struct tileset {
-		tileset() : _texture(0) {
-		}
-
-		~tileset() {
-			if (_texture) {
-				SDL_DestroyTexture(_texture);
-			}
-		}
-
-		void load(screen& s, const char* filename, int tilesize) {
-			this->tilesize = tilesize;
-			SDL_Surface* img = IMG_Load(filename);
-			if (img == nullptr) {
-				throw error("Failed to load %s: %s", filename, SDL_GetError());
-			}
-			_texture = SDL_CreateTextureFromSurface(s.rnd, img);
-			if (_texture == nullptr) {
-				throw error("Failed to load %s: %s", filename, SDL_GetError());
-			}
-			if (SDL_QueryTexture(_texture, &format, &access, &w, &h) < 0) {
-				throw error("Failed to load %s: %s", filename, SDL_GetError());
-			}
-		}
-
-		rect tile(int idx) {
-			int npr = w / tilesize;
-			return rect(tilesize * (idx % npr), tilesize * (idx / npr), tilesize, tilesize);
-		}
-
-		template <size_t N>
-		rect tiles(const util::static_vector<int, N>& idx) {
-			rect r = tile(idx[0]);
-			for (int i = 1; i < N; ++i) {
-				r += tile(idx[i]);
-			}
-			return r;
-		}
-
-		void draw(screen& s, int tileidx, const point& dst) {
-			rect r = tile(tileidx);
-			rect d(dst.x, dst.y, r.w, r.h);
-			SDL_RenderCopy(s.rnd, _texture, r.data(), d.data());
-		}
-
-		void draw(screen& s, int tileidx, const rect& dst) {
-			rect r = tile(tileidx);
-			SDL_RenderCopy(s.rnd, _texture, r.data(), dst.data());
-		}
-
-		void draw_angle(screen& s, int tileidx, const point& dst, double angle, const point* p) {
-			rect r = tile(tileidx);
-			rect d(dst.x, dst.y, r.w, r.h);
-			SDL_RenderCopyEx(s.rnd, _texture, r.data(), d.data(), angle, (const SDL_Point*)p, SDL_FLIP_NONE);
-		}
-
-		void draw(screen& s, const rect& src, const rect& dst) {
-			SDL_RenderCopy(s.rnd, _texture, src.data(), dst.data());
-		}
-
-		SDL_Texture* _texture;
-		Uint32 format;
-		int access;
-		int w;
-		int h;
-		int tilesize;
-	};
 
 	struct animation {
 		enum Type {
@@ -301,40 +221,6 @@ namespace sdl {
 		State state;
 	};
 
-	struct numbers {
-		void load(screen& s, const char* filename) {
-			img.load(s, filename, 0);
-		}
-
-		int _count(int number) const {
-			int np = 1;
-			while (number > 9) {
-				number /= 10;
-				np += 1;
-			}
-			return np;
-		}
-
-		void draw(screen& s, int number, const point& pos) {
-			int np = _count(number);
-			int nw = img.w / 10;
-			int tw = np * nw;
-			int x = pos.x + (tw / 2) - (nw);
-			while (true) {
-				int n = number % 10;
-
-				rect src(nw * n, 0, nw, img.h);
-				rect dst(x, pos.y - img.h / 2, nw, img.h);
-				img.draw(s, src, dst);
-				if (number < 10)
-					break;
-				number /= 10;
-				x -= nw;
-			}
-		}
-
-		tileset img;
-	};
 
 	struct sfx {
 		sfx() : _chunk(0) {
