@@ -1,9 +1,10 @@
 #include "common.hpp"
+#include "render.hpp"
 #include "geo.hpp"
 
-std::vector<cube_vert> make_cube_vertices(const glm::vec3& size) {
+std::vector<cube_vert> make_cube_vertices(const vec3& size) {
 
-	glm::vec3 corners[8] = {
+	vec3 corners[8] = {
 		{-1.f,-1.f,-1.f}, // bottom
 		{ 1.f,-1.f,-1.f},
 		{-1.f,-1.f, 1.f},

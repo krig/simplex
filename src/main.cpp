@@ -1,6 +1,6 @@
 #include "common.hpp"
+#include "render.hpp"
 #include "rand.hpp"
-#include "shaders.hpp"
 #include "world.hpp"
 #include "geo.hpp"
 
@@ -48,7 +48,7 @@ namespace {
 
 			make_cube();
 
-			camera.look_at(glm::vec3(3,3,5), glm::vec3(0,0,0));
+			camera.look_at(vec3(3,3,5), vec3(0,0,0));
 		}
 
 		void load_shaders() {
@@ -78,7 +78,7 @@ namespace {
 
 		void render() {
 			SDL_Point sz = screen.get_size();
-			glm::mat4 proj = glm::perspective<float>(deg2rad(50.f), (float)sz.x/(float)sz.y, 0.1, 100.0);
+			mat4 proj = glm::perspective<float>(deg2rad(50.f), (float)sz.x/(float)sz.y, 0.1, 100.0);
 			glViewport(0, 0, sz.x, sz.y);
 			glClearColor(0.2f, 0.2f, 0.2f, 0.0f);
 			glClearDepth(1.f);
@@ -99,7 +99,7 @@ namespace {
 
 		void make_cube() {
 			cube_vao = make_vao();
-			cube_verts = make_cube_vertices(glm::vec3(1.f, 1.f, 1.f));
+			cube_verts = make_cube_vertices(vec3(1.f, 1.f, 1.f));
 			bind_vao(cube_vao);
 			cube_vbo = make_vbo();
 			fill_static_vbo(cube_vbo, cube_verts);
@@ -111,10 +111,10 @@ namespace {
 		GLuint cube_vao, cube_vbo;
 		float a, b, c;
 
-		void render_cube(const glm::mat4& proj) {
-			glm::mat4 cube_pos;
-			cube_pos = glm::translate(glm::vec3(sinf(a), cosf(b), sinf(c)));
-			cube_pos *= glm::rotate(a*0.3f, glm::vec3(0.f, 1.f, 0.f));
+		void render_cube(const mat4& proj) {
+			mat4 cube_pos;
+			cube_pos = glm::translate(vec3(sinf(a), cosf(b), sinf(c)));
+			cube_pos *= glm::rotate(a*0.3f, vec3(0.f, 1.f, 0.f));
 			a += 0.04f, b += 0.02f, c += 0.03f;
 			basic_shader->use();
 			basic_shader->uniform("projection", proj);
@@ -132,7 +132,7 @@ namespace {
 		void render_sky() {
 		}
 
-		sdl::screen screen;
+		renderer screen;
 		std::unique_ptr<shader_program> basic_shader;
 		thing player;
 		thing camera;
@@ -181,8 +181,8 @@ namespace {
 int main(int argc, char* argv[]) {
 	try {
 		util::randseed();
-		sdl::sdl lib;
-		lib.init();
+		SDL sdl;
+		sdl.init();
 		mainloop();
 	}
 	catch (const std::exception& e) {

@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <memory>
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_mixer.h>
@@ -37,5 +38,3 @@ namespace util {
 
 #include "strfmt.hpp"
 #include "logging.hpp"
-
-#include "sdl2.hpp"

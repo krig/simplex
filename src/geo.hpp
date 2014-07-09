@@ -1,9 +1,9 @@
 #pragma once
 
 struct cube_vert {
-	glm::vec3 pos;
-	glm::vec3 normal;
+	vec3 pos;
+	vec3 normal;
 };
 
-std::vector<cube_vert> make_cube_vertices(const glm::vec3& size);
+std::vector<cube_vert> make_cube_vertices(const vec3& size);
 
