@@ -20,16 +20,6 @@ namespace sdl {
 		char _buf[2048];
 	};
 
-	inline void delay_to_fps(const Uint32 delta,
-	                         const Uint32 min_ticks_per_frame = (Uint32)((1.0 / 60.0) * 1000.0)) {
-		if (delta < min_ticks_per_frame) {
-			SDL_Delay(min_ticks_per_frame - delta);
-		}
-		else {
-			LOG_TRACE("%u / %u", delta, min_ticks_per_frame);
-		}
-	}
-
 	struct sdl {
 
 		sdl() {
@@ -110,58 +100,6 @@ namespace sdl {
 
 		SDL_Window* window;
 		SDL_GLContext context;
-	};
-
-
-	struct animation {
-		enum Type {
-			single_shot,
-			looping
-		};
-
-		enum State {
-			stopped,
-			playing
-		};
-
-		void start() {
-			state = playing;
-			t = 0.0;
-		}
-
-		void stop() {
-			state = stopped;
-		}
-
-		void update(double dt) {
-			if (state == stopped)
-				return;
-			t += dt;
-			if (t > 1.0 / speed) {
-				idx++;
-				t = 0.0;
-			}
-			if (idx >= (int)frames.size()) {
-				if (type == looping) {
-					idx = 0;
-				}
-				else {
-					idx = frames.size() - 1;
-					state = stopped;
-				}
-			}
-		}
-
-		int current() const {
-			return frames[idx];
-		}
-
-		std::vector<int> frames;
-		int idx;
-		double speed;
-		double t;
-		Type type;
-		State state;
 	};
 
 
