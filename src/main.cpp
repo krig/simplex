@@ -1,17 +1,14 @@
 #include "common.hpp"
 #include "rand.hpp"
 #include "shaders.hpp"
-#include <deque>
-#include <algorithm>
-#include <array>
 #include "world.hpp"
 #include "geo.hpp"
 
 namespace {
 	const double TARGET_FPS = 120.0;
 	const float PI = 3.14159265358979323846f;
-	const int SCR_W = 1000;
-	const int SCR_H = 600;
+	const int SCR_W = 640;
+	const int SCR_H = 480;
 
 	constexpr float deg2rad(float deg) {
 		return (deg / 360.f) * 2.f * PI;
@@ -27,8 +24,8 @@ namespace {
 		void init() {
 			screen.create("game", SCR_W, SCR_H, SCR_W, SCR_H);
 
-			Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 1, 512);
-			Mix_AllocateChannels(3);
+			//Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 1, 512);
+			//Mix_AllocateChannels(3);
 
 			SDL_SetRelativeMouseMode(SDL_TRUE);
 
@@ -51,7 +48,7 @@ namespace {
 
 			make_cube();
 
-			camera.look_at(glm::vec3(2,2,5), glm::vec3(0,0,0));
+			camera.look_at(glm::vec3(3,3,5), glm::vec3(0,0,0));
 		}
 
 		void load_shaders() {
@@ -80,7 +77,7 @@ namespace {
 		}
 
 		void render() {
-			sdl::point sz = screen.get_size();
+			SDL_Point sz = screen.get_size();
 			glm::mat4 proj = glm::perspective<float>(deg2rad(50.f), (float)sz.x/(float)sz.y, 0.1, 100.0);
 			glViewport(0, 0, sz.x, sz.y);
 			glClearColor(0.2f, 0.2f, 0.2f, 0.0f);
@@ -185,6 +182,7 @@ int main(int argc, char* argv[]) {
 	try {
 		util::randseed();
 		sdl::sdl lib;
+		lib.init();
 		mainloop();
 	}
 	catch (const std::exception& e) {

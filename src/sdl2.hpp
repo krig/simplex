@@ -30,120 +30,39 @@ namespace sdl {
 		}
 	}
 
+	struct sdl {
 
-	struct core {
-		core() {
+		sdl() {
+			_sdl = _mix = _img = false;
+		}
+
+		void init() {
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
 
 			if (SDL_Init(SDL_INIT_EVERYTHING) < 0)
 				throw error("SDL_Init failed: %s", SDL_GetError());
-		}
+			_sdl = true;
 
-		~core() {
-			SDL_Quit();
-		}
-	};
-
-	//struct ttf {
-	//	ttf() {
-	//		if (TTF_Init() < 0) {
-	//			throw error("TTF_Init failed: %s", TTF_GetError());
-	//		}
-	//	}
-	//
-	// ~ttf() {
-	//		TTF_Quit();
-	//	}
-	//};
-
-	struct image {
-		image() {
-			if (IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG) < 0) {
+			if (IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG) < 0)
 				throw error("IMG_Init failed: %s", IMG_GetError());
-			}
-		}
+			_img = true;
 
-		~image() {
-			IMG_Quit();
-		}
-	};
-
-	struct mixer {
-		mixer() {
-			if (Mix_Init(MIX_INIT_OGG) < 0) {
+			if (Mix_Init(MIX_INIT_OGG) < 0)
 				throw error("Mix_Init failed: %s", Mix_GetError());
-			}
+			_mix = true;
 		}
 
-		~mixer() {
-			Mix_Quit();
-		}
-	};
-
-	struct sdl {
-		core _core;
-		mixer _mixer;
-		image _image;
-		//ttf _ttf;
-	};
-
-	struct rect : public SDL_Rect {
-		rect() {
-			x = 0;
-			y = 0;
-			w = 0;
-			h = 0;
-		}
-		rect(const rect& o) {
-			x = o.x;
-			y = o.y;
-			w = o.w;
-			h = o.h;
-		}
-		rect(float x, float y, float w, float h) {
-			this->x = x;
-			this->y = y;
-			this->w = w;
-			this->h = h;
+		~sdl() {
+			if (_mix) Mix_Quit();
+			if (_img) IMG_Quit();
+			if (_sdl) SDL_Quit();
 		}
 
-		bool has_intersection(const rect& r) {
-			return SDL_HasIntersection(data(), r.data());
-		}
-
-		rect& operator+=(const rect& o) {
-			int x2 = (std::min)(x, o.x);
-			int y2 = (std::min)(y, o.y);
-			int w2 = (std::max)(x + w, o.x + o.w);
-			int h2 = (std::max)(y + h, o.y + o.h);
-			x = x2;
-			y = y2;
-			w = w2 - x2;
-			h = h2 - y2;
-			return *this;
-		}
-
-		SDL_Rect* data() const {
-			return (SDL_Rect*)this;
-		}
-	};
-
-
-	struct point : public SDL_Point {
-		point() {
-			x = 0;
-			y = 0;
-		}
-		point(float x, float y) {
-			this->x = x;
-			this->y = y;
-		}
-
-		SDL_Point* data() const {
-			return (SDL_Point*)this;
-		}
+		bool _sdl;
+		bool _mix;
+		bool _img;
 	};
 
 	struct screen {
@@ -153,7 +72,7 @@ namespace sdl {
 			                          SDL_WINDOWPOS_UNDEFINED,
 			                          winw,
 			                          winh,
-			                          SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
+			                          SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN_DESKTOP);
 			if (window == nullptr) {
 				throw error("%s", SDL_GetError());
 			}
@@ -183,8 +102,8 @@ namespace sdl {
 			SDL_GL_SwapWindow(window);
 		}
 
-		point get_size() {
-			point sz;
+		SDL_Point get_size() {
+			SDL_Point sz;
 			SDL_GetWindowSize(window, &sz.x, &sz.y);
 			return sz;
 		}
