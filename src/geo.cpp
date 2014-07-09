@@ -2,6 +2,8 @@
 #include "render.hpp"
 #include "geo.hpp"
 
+namespace geo {
+
 std::vector<cube_vert> make_cube_vertices(const vec3& size) {
 
 	vec3 corners[8] = {
@@ -24,8 +26,8 @@ std::vector<cube_vert> make_cube_vertices(const vec3& size) {
 		{ corners[0], { 0.f, -1.f, 0.f } },
 		{ corners[1], { 0.f, -1.f, 0.f } },
 		{ corners[2], { 0.f, -1.f, 0.f } },
-		{ corners[1], { 1.f, -1.f, 0.f } },
-		{ corners[3], { 1.f, -1.f, 0.f } },
+		{ corners[1], { 0.f, -1.f, 0.f } },
+		{ corners[3], { 0.f, -1.f, 0.f } },
 		{ corners[2], { 0.f, -1.f, 0.f } },
 
 		// top
@@ -70,4 +72,6 @@ std::vector<cube_vert> make_cube_vertices(const vec3& size) {
 	};
 
 	return verts;
+}
+
 }

@@ -52,7 +52,7 @@ namespace {
 		}
 
 		void load_shaders() {
-			basic_shader = load_program("data/basic.vsh", "data/basic.fsh");
+			basic_shader.name = load_program("data/basic.vsh", "data/basic.fsh");
 		}
 
 		void handle_event(SDL_Event* e) {
@@ -98,32 +98,19 @@ namespace {
 		}
 
 		void make_cube() {
-			cube_vao = make_vao();
-			cube_verts = make_cube_vertices(vec3(1.f, 1.f, 1.f));
-			bind_vao(cube_vao);
-			cube_vbo = make_vbo();
-			fill_static_vbo(cube_vbo, cube_verts);
-			glVertexAttribPointer(0u, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), 0);
-			glVertexAttribPointer(1u, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (const GLvoid*)(3 * sizeof(GLfloat)));
+			cube.make(vec3(1.f, 1.f, 1.f));
 			a = 0.f;
 		}
 
-		GLuint cube_vao, cube_vbo;
+		geo::cube cube;
 		float a, b, c;
 
 		void render_cube(const mat4& proj) {
-			mat4 cube_pos;
-			cube_pos = glm::translate(vec3(sinf(a), cosf(b), sinf(c)));
-			cube_pos *= glm::rotate(a*0.3f, vec3(0.f, 1.f, 0.f));
+			cube.transform = glm::translate(vec3(sinf(a), cosf(b), sinf(c)));
+			cube.transform *= glm::rotate(a*0.6f, vec3(1.f, 0.f, 0.f));
+			cube.set_color(vec3(0.3f, 0.f, 0.8f));
 			a += 0.04f, b += 0.02f, c += 0.03f;
-			basic_shader->use();
-			basic_shader->uniform("projection", proj);
-			basic_shader->uniform("view", camera.pos);
-			basic_shader->uniform("model", cube_pos);
-			bind_vao(cube_vao);
-			glEnableVertexAttribArray(0);
-			glEnableVertexAttribArray(1);
-			glDrawArrays(GL_TRIANGLES, 0, 6 * 2 * 3);
+			cube.render(&basic_shader, proj, camera.pos);
 		}
 
 		void generate_sky() {
@@ -133,10 +120,9 @@ namespace {
 		}
 
 		renderer screen;
-		std::unique_ptr<shader_program> basic_shader;
+		shader_program basic_shader;
 		thing player;
 		thing camera;
-		std::vector<cube_vert> cube_verts;
 		bool wireframe_mode;
 		bool running;
 	} the_game;

@@ -137,25 +137,10 @@ struct shader {
 
 struct shader_program {
 	shader_program() {
-		name = glCreateProgram();
+		name = 0;
 	}
 
-	bool compile(GLuint shader1, GLuint shader2) {
-		glAttachShader(name, shader1);
-		glAttachShader(name, shader2);
-		glLinkProgram(name);
-		GLint status;
-		glGetProgramiv(name, GL_LINK_STATUS, &status);
-		if (status == GL_FALSE) {
-			GLint length;
-			glGetProgramiv(name, GL_INFO_LOG_LENGTH, &length);
-			std::vector<GLchar> info(length);
-			glGetProgramInfoLog(name, length, nullptr, info.data());
-			fprintf(stderr, "glLinkProgram failed: %s\n", info.data());
-		}
-		glDetachShader(name, shader1);
-		glDetachShader(name, shader2);
-		return status != GL_FALSE;
+	explicit shader_program(GLuint program) : name(program) {
 	}
 
 	~shader_program() {
@@ -185,15 +170,35 @@ struct shader_program {
 	GLuint name;
 };
 
-inline std::unique_ptr<shader_program> load_program(const char* vertex_shader, const char* fragment_shader) {
+inline bool compile_program(GLuint program, GLuint shader1, GLuint shader2) {
+	glAttachShader(program, shader1);
+	glAttachShader(program, shader2);
+	glLinkProgram(program);
+	GLint status;
+	glGetProgramiv(program, GL_LINK_STATUS, &status);
+	if (status == GL_FALSE) {
+		GLint length;
+		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
+		std::vector<GLchar> info(length);
+		glGetProgramInfoLog(program, length, nullptr, info.data());
+		fprintf(stderr, "glLinkProgram failed: %s\n", info.data());
+	}
+	glDetachShader(program, shader1);
+	glDetachShader(program, shader2);
+	return status != GL_FALSE;
+}
+
+
+inline GLuint load_program(const char* vertex_shader, const char* fragment_shader) {
 	shader v(GL_VERTEX_SHADER);
 	shader f(GL_FRAGMENT_SHADER);
 	string vsh = util::read_file(vertex_shader);
 	string fsh = util::read_file(fragment_shader);
 	v.compile(vsh.c_str());
 	f.compile(fsh.c_str());
-	std::unique_ptr<shader_program> program(new shader_program);
-	program->compile(v.name, f.name);
+	GLuint program = glCreateProgram();
+	if (!compile_program(program, v.name, f.name))
+		throw error("Failed to compile v='%s', f='%s'", vertex_shader, fragment_shader);
 	return program;
 }
 
@@ -214,9 +219,12 @@ inline GLuint make_vbo() {
 }
 
 template <class V>
-void fill_static_vbo(GLuint vbo, const V& v) {
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, v.size() * sizeof(v[0]), (const void*)v.data(), GL_STATIC_DRAW);
+GLuint make_buffer(GLenum target, const V& v, GLenum usage = GL_STATIC_DRAW) {
+	GLuint vbo;
+	glGenBuffers(1, &vbo);
+	glBindBuffer(target, vbo);
+	glBufferData(target, v.size() * sizeof(v[0]), (const void*)v.data(), usage);
+	return vbo;
 }
 
 struct renderobj {
