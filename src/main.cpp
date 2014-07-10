@@ -3,6 +3,7 @@
 #include "rand.hpp"
 #include "world.hpp"
 #include "geo.hpp"
+#include "aabb.hpp"
 
 namespace {
 	const double TARGET_FPS = 120.0;
@@ -14,9 +15,61 @@ namespace {
 		return (deg / 360.f) * 2.f * PI;
 	}
 
+	struct Player {
 
-	struct game {
-		game() {
+		void move(const glm::vec3& dir) {
+			mat4 ori = glm::rotate(mat4(), angle, vec3(0.f, 1.f, 0.f));
+			pos += vec3(vec4(dir, 1.f) * ori);
+		}
+
+		void looky(float y) {
+			const float twopi = PI*2.f;
+			angle += y;
+			while (angle < 0.f)
+				angle += twopi;
+			while (angle > twopi)
+				angle -= twopi;
+		}
+
+		void jump() {
+		}
+
+		vec3 pos;
+		float angle; // look angle around Y axis (radians)
+	};
+
+	struct Camera {
+		// position and orientation of camera
+		// relative to player
+		// an fps camera is offset from the player position
+		// and rotates with the player in the XZ direction
+		// it can then rotate in a limited range around its
+		// local Z axis
+		vec3 offset;
+		float angle; // look angle around Z axis (radians)
+
+		void lookz(float z) {
+			const float halfpi = PI*0.5f;
+			angle += z;
+			if (angle > halfpi)
+				angle = halfpi;
+			if (angle < -halfpi)
+				angle = -halfpi;
+		}
+	};
+
+	// calculate view matrix
+	mat4 make_view_matrix(const Player& player, const Camera& camera) {
+		mat4 view;
+		view = glm::rotate(view, camera.angle, vec3(1.f, 0.f, 0.f));
+		view = glm::rotate(view, player.angle, vec3(0.f, 1.f, 0.f));
+		view = glm::translate(view, player.pos - camera.offset);
+		return view;
+	}
+
+	
+	struct Game {
+		Game() {
 			running = true;
 			wireframe_mode = false;
 		}
@@ -31,6 +84,11 @@ namespace {
 
 			init_gl();
 			load_shaders();
+
+			player.pos = vec3(3.f, 0.f, 3.f);
+			player.angle = 0.f;
+			camera.offset = vec3(0.f, 1.85f, 0.f);
+			camera.angle = 0.f;
 		}
 
 		void init_gl() {
@@ -46,9 +104,10 @@ namespace {
 
 			generate_sky();
 
+			make_groundplane();
 			make_cube();
 
-			camera.look_at(vec3(3,3,5), vec3(0,0,0));
+			//player.look_at(vec3(3,3,5), vec3(0,0,0));
 		}
 
 		void load_shaders() {
@@ -59,26 +118,65 @@ namespace {
 			if (e->type == SDL_QUIT) {
 				running = false;
 			} else if (e->type == SDL_KEYDOWN) {
-				if (e->key.keysym.sym == SDLK_w) {
+				switch (e->key.keysym.sym) {
+				case SDLK_F1: {
 					wireframe_mode = !wireframe_mode;
-				}
-				else if (e->key.keysym.sym == SDLK_ESCAPE) {
+				} break;
+				case SDLK_ESCAPE: {
 					running  = false;
+				} break;
 				}
 			}
 		}
 
-		int mouse_dx, mouse_dy;
-		uint32_t mouse_buttons;
+		void handle_input(double dt) {
+			const Uint8* state = SDL_GetKeyboardState(NULL);
+			if (state[SDL_SCANCODE_A])
+				player.move(vec3(dt, 0.f, 0.f));
+			if (state[SDL_SCANCODE_D])
+				player.move(vec3(-dt, 0.f, 0.f));
+			if (state[SDL_SCANCODE_W])
+				player.move(vec3(0.f, 0.f, dt));
+			if (state[SDL_SCANCODE_S])
+				player.move(vec3(0.f, 0.f, -dt));
+
+			int mouse_dx, mouse_dy;
+			uint32_t mouse_buttons;
+			mouse_buttons = SDL_GetRelativeMouseState(&mouse_dx, &mouse_dy);
+			float xsens = 1.f/(2.f*PI);
+			float ysens = 1.f/(2.f*PI);
+
+			if (mouse_dx != 0)
+				player.looky(mouse_dx * dt * xsens);
+			if (mouse_dy != 0)
+				camera.lookz(mouse_dy * dt * ysens);
+		}
+
 
 		void tick(double dt) {
-			mouse_buttons = SDL_GetRelativeMouseState(&mouse_dx, &mouse_dy);
 			//printf("%d, %d, %u\n", x, y, buttons);
+
+			update_daycycle(dt);
+			update_chunks(dt);
+			update_ecosystem(dt);
+			update_player(dt);
+			update_creatures(dt);
+		}
+
+		void update_daycycle(double dt) {
+		}
+		void update_chunks(double dt) {
+		}
+		void update_ecosystem(double dt) {
+		}
+		void update_player(double dt) {
+		}
+		void update_creatures(double dt) {
 		}
 
 		void render() {
 			SDL_Point sz = screen.get_size();
-			mat4 proj = glm::perspective<float>(deg2rad(50.f), (float)sz.x/(float)sz.y, 0.1, 100.0);
+			proj = glm::perspective<float>(deg2rad(50.f), (float)sz.x/(float)sz.y, 0.1, 100.0);
 			glViewport(0, 0, sz.x, sz.y);
 			glClearColor(0.2f, 0.2f, 0.2f, 0.0f);
 			glClearDepth(1.f);
@@ -86,11 +184,15 @@ namespace {
 
 			glPolygonMode(GL_FRONT, wireframe_mode ? GL_LINE : GL_FILL);
 
+			view = make_view_matrix(player, camera);
+
 			render_sky();
 
 			glClear(GL_DEPTH_BUFFER_BIT);
 
-			render_cube(proj);
+			render_groundplane();
+
+			render_cube();
 
 			screen.present();
 
@@ -102,15 +204,24 @@ namespace {
 			a = 0.f;
 		}
 
-		geo::cube cube;
-		float a, b, c;
+		void make_groundplane() {
+			plane.make();
+		}
 
-		void render_cube(const mat4& proj) {
-			cube.transform = glm::translate(vec3(sinf(a), cosf(b), sinf(c)));
-			cube.transform *= glm::rotate(a*0.6f, vec3(1.f, 0.f, 0.f));
-			cube.set_color(vec3(0.3f, 0.f, 0.8f));
+		mat4 proj;
+		mat4 view;
+
+
+		void render_groundplane() {
+			glVertexAttrib3f(2u, 0.2f, 0.6f, 0.2f);
+			plane.render(&basic_shader, proj, view);
+		}
+
+		void render_cube() {
+			cube.transform = glm::rotate(a*0.1f, vec3(0.f, 1.f, 0.f)) * glm::translate(vec3(0.f, 1.f, 0.f));
 			a += 0.04f, b += 0.02f, c += 0.03f;
-			cube.render(&basic_shader, proj, camera.pos);
+			glVertexAttrib3f(2u, 0.3f, 0.0f, 0.8f);
+			cube.render(&basic_shader, proj, view);
 		}
 
 		void generate_sky() {
@@ -119,18 +230,21 @@ namespace {
 		void render_sky() {
 		}
 
-		renderer screen;
+		Window screen;
 		shader_program basic_shader;
-		thing player;
-		thing camera;
+		Player player;
+		Camera camera;
+		geo::plane plane;
+		geo::cube cube;
+		float a, b, c;
 		bool wireframe_mode;
 		bool running;
-	} the_game;
+	} game;
 
 	void mainloop() {
 		SDL_Event event;
-		the_game.init();
-		the_game.render();
+		game.init();
+		game.render();
 
 		// http://gafferongames.com/game-physics/fix-your-timestep/
 		double t = 0.0;
@@ -141,7 +255,7 @@ namespace {
 		double current_time = (double)SDL_GetPerformanceCounter() * freq;
 		double accumulator = 0.0;
 
-		while (the_game.running) {
+		while (game.running) {
 			double new_time = (double)SDL_GetPerformanceCounter() * freq;
 			double frame_time = new_time - current_time;
 			if ( frame_time > 0.25 ) {
@@ -152,14 +266,15 @@ namespace {
 			accumulator += frame_time;
 			while (accumulator >= dt) {
 				while (SDL_PollEvent(&event)) {
-					the_game.handle_event(&event);
+					game.handle_event(&event);
 				}
-				the_game.tick(dt);
+				game.handle_input(dt);
+				game.tick(dt);
 
 				t += dt;
 				accumulator -= dt;
 			}
-			the_game.render();
+			game.render();
 		}
 	}
 }

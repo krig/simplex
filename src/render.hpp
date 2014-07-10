@@ -60,7 +60,7 @@ struct SDL {
 	bool _img;
 };
 
-struct renderer {
+struct Window {
 	void create(const char* title, int w, int h, int winw, int winh) {
 		window = SDL_CreateWindow(title,
 		                          SDL_WINDOWPOS_UNDEFINED,
@@ -227,12 +227,36 @@ GLuint make_buffer(GLenum target, const V& v, GLenum usage = GL_STATIC_DRAW) {
 	return vbo;
 }
 
-struct renderobj {
-	shader_program* material;
-	mat4 transform;
+// defined in asset manager
+struct Mesh;
+struct Material;
 
-	std::vector<GLuint> buffers;
-	std::vector<GLuint> arrays;
+// meshes and materials are handled by the asset manager (only loaded once,
+// background loading and swap in etc.)
+// that way everything else can just use pointers, pointers are guaranteed
+// to be valid by asset manager
+
+// instance: mesh + material + transform
+struct Instance {
+	Mesh* mesh;
+	Material* material;
+	mat4 transform;
 };
 
+// should the camera just be an instance with a null mesh and material?
+struct Camera {
+	mat4 transform;
+};
+
+// * in game, keep separate arrays for instances of different type
+// * sort arrays by shader first and texture second before rendering
+
+// in draw...
+// draw_sky()
+// draw_terrain()
+// draw_trees()
+// draw_plants()
+// draw_items()
+// draw_creatures()
+// draw_players()
 
