@@ -4,7 +4,7 @@
 
 namespace geo {
 
-	std::vector<cube_vert> make_cube_vertices(const vec3& size) {
+	std::vector<cube_vert> make_cube_vertices(const vec3& size, bool invert) {
 
 		vec3 corners[8] = {
 			{-1.f,-1.f,-1.f}, // bottom
@@ -71,13 +71,22 @@ namespace geo {
 			{ corners[7], { 1.f, 0.f, 0.f } },
 		};
 
+		if (invert) {
+			for (size_t i = 0; i < verts.size(); i += 3) {
+				std::swap(verts[i + 1].pos, verts[i + 2].pos);
+				verts[i].normal = -verts[i].normal;
+				verts[i+1].normal = -verts[i+1].normal;
+				verts[i+2].normal = -verts[i+2].normal;
+			}
+		}
+
 		return verts;
 	}
 
-	void cube::make(const vec3& size) {
+	void cube::make(const vec3& size, bool invert) {
 		array = make_vao();
 		bind_vao(array);
-		buffer = make_buffer(GL_ARRAY_BUFFER, make_cube_vertices(size));
+		buffer = make_buffer(GL_ARRAY_BUFFER, make_cube_vertices(size, invert));
 		glVertexAttribPointer(0u, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), 0);
 		glVertexAttribPointer(1u, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (const void*)(3*sizeof(float)));
 		glVertexAttrib3f(2u, 1.f, 1.f, 1.f);

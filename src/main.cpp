@@ -4,6 +4,7 @@
 #include "world.hpp"
 #include "geo.hpp"
 #include "aabb.hpp"
+#include "assets.hpp"
 
 namespace {
 	const double TARGET_FPS = 120.0;
@@ -67,11 +68,22 @@ namespace {
 		return view;
 	}
 
-	
+	// the sky view matrix
+	mat4 make_sky_view_matrix(const Player& player, const Camera& camera) {
+		mat4 view;
+		view = glm::rotate(view, camera.angle, vec3(1.f, 0.f, 0.f));
+		view = glm::rotate(view, player.angle, vec3(0.f, 1.f, 0.f));
+		return view;
+	}
+
 	struct Game {
 		Game() {
 			running = true;
 			wireframe_mode = false;
+		}
+
+		~Game() {
+			release_assets();
 		}
 
 		void init() {
@@ -102,8 +114,7 @@ namespace {
 			glClearColor(0.f, 0.f, 0.f, 0.f);
 			glClearDepth(1.f);
 
-			generate_sky();
-
+			make_sky();
 			make_groundplane();
 			make_cube();
 
@@ -111,7 +122,8 @@ namespace {
 		}
 
 		void load_shaders() {
-			basic_shader.name = load_program("data/basic.vsh", "data/basic.fsh");
+			material_basic = load_material("basic");
+			material_sky = load_material("sky");
 		}
 
 		void handle_event(SDL_Event* e) {
@@ -130,15 +142,17 @@ namespace {
 		}
 
 		void handle_input(double dt) {
+			float speed = 6.f * dt;
+
 			const Uint8* state = SDL_GetKeyboardState(NULL);
 			if (state[SDL_SCANCODE_A])
-				player.move(vec3(dt, 0.f, 0.f));
+				player.move(vec3(speed, 0.f, 0.f));
 			if (state[SDL_SCANCODE_D])
-				player.move(vec3(-dt, 0.f, 0.f));
+				player.move(vec3(-speed, 0.f, 0.f));
 			if (state[SDL_SCANCODE_W])
-				player.move(vec3(0.f, 0.f, dt));
+				player.move(vec3(0.f, 0.f, speed));
 			if (state[SDL_SCANCODE_S])
-				player.move(vec3(0.f, 0.f, -dt));
+				player.move(vec3(0.f, 0.f, -speed));
 
 			int mouse_dx, mouse_dy;
 			uint32_t mouse_buttons;
@@ -200,7 +214,7 @@ namespace {
 		}
 
 		void make_cube() {
-			cube.make(vec3(1.f, 1.f, 1.f));
+			cube.make(vec3(0.5f, 0.5f, 0.5f));
 			a = 0.f;
 		}
 
@@ -214,28 +228,49 @@ namespace {
 
 		void render_groundplane() {
 			glVertexAttrib3f(2u, 0.2f, 0.6f, 0.2f);
-			plane.render(&basic_shader, proj, view);
+			plane.render(material_basic, proj, view);
 		}
 
 		void render_cube() {
 			cube.transform = glm::rotate(a*0.1f, vec3(0.f, 1.f, 0.f)) * glm::translate(vec3(0.f, 1.f, 0.f));
 			a += 0.04f, b += 0.02f, c += 0.03f;
+
+			Material* material = material_basic;
+			material->use();
+			material->uniform("projection", proj);
+			material->uniform("view", view);
+			material->uniform("model", cube.transform);
+
 			glVertexAttrib3f(2u, 0.3f, 0.0f, 0.8f);
-			cube.render(&basic_shader, proj, view);
+			cube.render(proj, view);
 		}
 
-		void generate_sky() {
+		void make_sky() {
+			sky.make(vec3(10.f, 10.f, 10.f), true);
 		}
 
 		void render_sky() {
+			mat4 skyview = make_sky_view_matrix(player, camera);
+			glVertexAttrib3f(2u, 1.f, 1.f, 1.f);
+
+			Material* material = material_sky;
+			material->use();
+			material->uniform("projection", proj);
+			material->uniform("view", skyview);
+			material->uniform("model", sky.transform);
+			material->uniform("sky_dark", vec3(0.3f, 0.3f, 0.6f));
+			material->uniform("sky_light", vec3(0.5f, 0.5f, 0.8f));
+			sky.render(proj, skyview);
 		}
 
 		Window screen;
-		shader_program basic_shader;
+		Material* material_basic;
+		Material* material_sky;
 		Player player;
 		Camera camera;
 		geo::plane plane;
 		geo::cube cube;
+		geo::cube sky;
 		float a, b, c;
 		bool wireframe_mode;
 		bool running;

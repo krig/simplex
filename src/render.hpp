@@ -35,6 +35,8 @@ struct SDL {
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 2);
 
 		if (SDL_Init(SDL_INIT_EVERYTHING) < 0)
 			throw error("SDL_Init failed: %s", SDL_GetError());
@@ -135,41 +137,6 @@ struct shader {
 	GLuint name;
 };
 
-struct shader_program {
-	shader_program() {
-		name = 0;
-	}
-
-	explicit shader_program(GLuint program) : name(program) {
-	}
-
-	~shader_program() {
-		glDeleteProgram(name);
-	}
-
-	void use() {
-		glUseProgram(name);
-	}
-
-	void uniform(const char* loc, const mat4& m) {
-		GLuint index = glGetUniformLocation(name, loc);
-		glUniformMatrix4fv(index, 1, GL_FALSE, glm::value_ptr(m));
-	}
-
-	void vertex_attrib(const char* loc, const vec3& v) {
-		GLuint i = glGetAttribLocation(name, loc);
-		glVertexAttrib3f(i, v.x, v.y, v.z);
-	}
-
-	void vertex_attrib(const char* loc, const float* p, GLuint num, GLuint stride) {
-		GLuint i = glGetAttribLocation(name, loc);
-		glVertexAttribPointer(i, 3, GL_FLOAT, GL_FALSE, 5*sizeof(float), 0);
-		glEnableVertexAttribArray(i);
-	}
-
-	GLuint name;
-};
-
 inline bool compile_program(GLuint program, GLuint shader1, GLuint shader2) {
 	glAttachShader(program, shader1);
 	glAttachShader(program, shader2);
@@ -230,6 +197,7 @@ GLuint make_buffer(GLenum target, const V& v, GLenum usage = GL_STATIC_DRAW) {
 // defined in asset manager
 struct Mesh;
 struct Material;
+struct Texture;
 
 // meshes and materials are handled by the asset manager (only loaded once,
 // background loading and swap in etc.)
@@ -240,6 +208,7 @@ struct Material;
 struct Instance {
 	Mesh* mesh;
 	Material* material;
+	std::vector<Texture*> textures;
 	mat4 transform;
 };
 

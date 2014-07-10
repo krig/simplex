@@ -1,5 +1,7 @@
 #pragma once
 
+#include "assets.hpp"
+
 namespace geo {
 
 	struct cube_vert {
@@ -11,13 +13,12 @@ namespace geo {
 		cube() : array(0), buffer(0), transform() {
 		}
 
-		void make(const vec3& size);
+		// create the cube geometry
+		// if the invert flag is true, the cube is
+		// created with inward-facing triangles
+		void make(const vec3& size, bool invert = false);
 
-		void render(shader_program* material, const mat4& proj, const mat4& view) {
-			material->use();
-			material->uniform("projection", proj);
-			material->uniform("view", view);
-			material->uniform("model", transform);
+		void render(const mat4& proj, const mat4& view) {
 			bind_vao(array);
 			glEnableVertexAttribArray(0);
 			glEnableVertexAttribArray(1);
@@ -37,7 +38,7 @@ namespace geo {
 
 		void make();
 
-		void render(shader_program* material, const mat4& proj, const mat4& view) {
+		void render(Material* material, const mat4& proj, const mat4& view) {
 			material->use();
 			material->uniform("projection", proj);
 			material->uniform("view", view);
