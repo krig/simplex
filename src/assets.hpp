@@ -9,11 +9,20 @@ struct Texture;
 struct Mesh {
 	GLuint vao;
 	GLuint vbo;
+
+	GLuint narrays;
+	GLuint ntriangles;
+};
+
+struct Asset {
+	virtual ~Asset() {}
+	Asset* next;
 };
 
 
+
 // material -> shaders, texture, animated texture, multitexture
-struct Material {
+struct Material : public Asset {
 	// ...
 
 	~Material() {
@@ -34,6 +43,11 @@ struct Material {
 		glUniformMatrix4fv(index, 1, GL_FALSE, glm::value_ptr(m));
 	}
 
+	void uniform(const char* loc, int i) {
+		GLuint index = glGetUniformLocation(program, loc);
+		glUniform1i(index, i);
+	}
+
 	void vertex_attrib(const char* loc, const vec3& v) {
 		GLuint i = glGetAttribLocation(program, loc);
 		glVertexAttrib3f(i, v.x, v.y, v.z);
@@ -46,11 +60,21 @@ struct Material {
 	}
 
 	GLuint program;
-	Material* next;
 };
 
-struct Texture {
-	// ...
+struct Texture : public Asset {
+
+	~Texture() {
+		glDeleteTextures(1, &texture);
+	}
+
+	void bind(int i) {
+		glActiveTexture(GL_TEXTURE0 + i);
+		glBindTexture(GL_TEXTURE_2D, texture);
+	}
+
+	GLuint texture;
+	int w, h;
 };
 
 Texture* load_texture(const char* name);

@@ -7,6 +7,7 @@ namespace geo {
 	struct cube_vert {
 		vec3 pos;
 		vec3 normal;
+		vec2 texcoord;
 	};
 
 	struct cube {
@@ -22,6 +23,7 @@ namespace geo {
 			bind_vao(array);
 			glEnableVertexAttribArray(0);
 			glEnableVertexAttribArray(1);
+			glEnableVertexAttribArray(2);
 			glDrawArrays(GL_TRIANGLES, 0, 6 * 2 * 3);
 
 		}
@@ -46,6 +48,7 @@ namespace geo {
 			bind_vao(array);
 			glEnableVertexAttribArray(0);
 			glEnableVertexAttribArray(1);
+			glEnableVertexAttribArray(2);
 			glDrawArrays(GL_TRIANGLES, 0, segments * segments * 6);
 
 		}

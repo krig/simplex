@@ -110,6 +110,7 @@ namespace {
 			glEnable(GL_DEPTH_TEST);
 			glDepthFunc(GL_LESS);
 			glCullFace(GL_BACK);
+			glEnable(GL_TEXTURE_2D);
 			glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 			glClearColor(0.f, 0.f, 0.f, 0.f);
 			glClearDepth(1.f);
@@ -124,6 +125,7 @@ namespace {
 		void load_shaders() {
 			material_basic = load_material("basic");
 			material_sky = load_material("sky");
+			cube_tex = load_texture("data/test64.png");
 		}
 
 		void handle_event(SDL_Event* e) {
@@ -227,7 +229,7 @@ namespace {
 
 
 		void render_groundplane() {
-			glVertexAttrib3f(2u, 0.2f, 0.6f, 0.2f);
+			glVertexAttrib3f(3u, 0.2f, 0.6f, 0.2f);
 			plane.render(material_basic, proj, view);
 		}
 
@@ -240,8 +242,10 @@ namespace {
 			material->uniform("projection", proj);
 			material->uniform("view", view);
 			material->uniform("model", cube.transform);
+			cube_tex->bind(0);
+			material->uniform("tex0", 0);
 
-			glVertexAttrib3f(2u, 0.3f, 0.0f, 0.8f);
+			glVertexAttrib3f(3u, 0.3f, 0.0f, 0.8f);
 			cube.render(proj, view);
 		}
 
@@ -251,7 +255,7 @@ namespace {
 
 		void render_sky() {
 			mat4 skyview = make_sky_view_matrix(player, camera);
-			glVertexAttrib3f(2u, 1.f, 1.f, 1.f);
+			glVertexAttrib3f(3u, 1.f, 1.f, 1.f);
 
 			Material* material = material_sky;
 			material->use();
@@ -264,6 +268,7 @@ namespace {
 		}
 
 		Window screen;
+		Texture* cube_tex;
 		Material* material_basic;
 		Material* material_sky;
 		Player player;

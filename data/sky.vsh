@@ -6,6 +6,7 @@ uniform mat4 model;
 
 in vec3 position;
 in vec3 in_normal;
+in vec2 in_texcoord;
 in vec3 in_color;
 out float gradient;
 
