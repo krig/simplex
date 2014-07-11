@@ -23,12 +23,12 @@ namespace {
 
 		void move(const glm::vec3& dir) {
 			mat4 ori = glm::rotate(mat4(), angle, vec3(0.f, 1.f, 0.f));
-			pos += vec3(vec4(dir, 1.f) * ori);
+			pos += vec3(ori * vec4(dir, 1.f));
 		}
 
-		void looky(float y) {
+		void rotate(float by) {
 			const float twopi = PI*2.f;
-			angle += y;
+			angle -= by;
 			while (angle < 0.f)
 				angle += twopi;
 			while (angle > twopi)
@@ -39,7 +39,7 @@ namespace {
 		}
 
 		vec3 pos;
-		float angle; // look angle around Y axis (radians)
+		float angle; // look angle around Y axis (radians), yaw
 	};
 
 	struct Camera {
@@ -54,8 +54,9 @@ namespace {
 		// local Z axis
 		vec3 offset;
 		float angle; // look angle around X axis (radians)
+		vec3 bob; // view bob (while walking / running)
 
-		void lookx(float x) {
+		void pitch(float x) {
 			const float halfpi = PI*0.5f;
 			angle += x;
 			if (angle > halfpi)
@@ -65,21 +66,32 @@ namespace {
 		}
 	};
 
+	mat4 fps_view(vec3 eye, float pitch, float yaw) {
+		float cosPitch = cos(pitch);
+		float sinPitch = sin(pitch);
+		float cosYaw = cos(yaw);
+		float sinYaw = sin(yaw);
+		vec3 xaxis(cosYaw, 0, -sinYaw);
+		vec3 yaxis(sinYaw * sinPitch, cosPitch, cosYaw * sinPitch);
+		vec3 zaxis(sinYaw * cosPitch, -sinPitch, cosPitch * cosYaw);
+
+		mat4 viewMatrix = {
+			vec4(       xaxis.x,            yaxis.x,            zaxis.x,      0 ),
+			vec4(       xaxis.y,            yaxis.y,            zaxis.y,      0 ),
+			vec4(       xaxis.z,            yaxis.z,            zaxis.z,      0 ),
+			vec4( -glm::dot( xaxis, eye ), -glm::dot( yaxis, eye ), -glm::dot( zaxis, eye ), 1 )
+		};
+		return viewMatrix;
+	}
+
 	// calculate world -> view matrix
 	mat4 make_view_matrix(const Player& player, const Camera& camera) {
-		mat4 view;
-		view = glm::rotate(view, camera.angle, vec3(1.f, 0.f, 0.f));
-		view = glm::rotate(view, player.angle, vec3(0.f, 1.f, 0.f));
-		view = glm::translate(view, - player.pos - camera.offset);
-		return view;
+		return fps_view(player.pos + camera.offset + camera.bob, camera.angle, player.angle);
 	}
 
 	// calculate world -> view matrix with no translation
 	mat4 make_sky_view_matrix(const Player& player, const Camera& camera) {
-		mat4 view;
-		view = glm::rotate(view, camera.angle, vec3(1.f, 0.f, 0.f));
-		view = glm::rotate(view, player.angle, vec3(0.f, 1.f, 0.f));
-		return view;
+		return fps_view(vec3(0, 0, 0), camera.angle, player.angle);
 	}
 
 	struct Game {
@@ -149,6 +161,8 @@ namespace {
 			}
 		}
 
+		vec3 bobd;
+
 		void handle_input(double dt) {
 			float speed = 6.f * dt;
 
@@ -162,6 +176,14 @@ namespace {
 			if (state[SDL_SCANCODE_S])
 				player.move(vec3(0.f, 0.f, speed));
 
+			if (state[SDL_SCANCODE_W] || state[SDL_SCANCODE_S]) {
+				camera.bob += vec3(sinf(bobd.x) * 0.003f, cosf(bobd.y) * 0.006f, 0.f);
+				bobd.x += speed * 1.6f;
+				bobd.y += speed * 1.8f;
+			} else {
+				bobd = vec3(0, 0, 0);
+			}
+
 			int mouse_dx, mouse_dy;
 			uint32_t mouse_buttons;
 			mouse_buttons = SDL_GetRelativeMouseState(&mouse_dx, &mouse_dy);
@@ -169,9 +191,9 @@ namespace {
 			float ysens = 1.f/(2.f*PI);
 
 			if (mouse_dx != 0)
-				player.looky(mouse_dx * dt * xsens);
+				player.rotate(mouse_dx * dt * xsens);
 			if (mouse_dy != 0)
-				camera.lookx(mouse_dy * dt * ysens);
+				camera.pitch(mouse_dy * dt * ysens);
 		}
 
 
