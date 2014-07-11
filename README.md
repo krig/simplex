@@ -29,3 +29,54 @@ metadata for a region is stored separately
 
 store YZX for compression benefits
 
+
+
+# major things to do
+
+* fps controls, running, view bobbing, jumping, physics
+
+* block texture generation
+  - generate 16x16 texture based on color + intensity noise
+  - normal maps
+  - specular maps
+  - generate combination textures like stone + gold, stone + diamond
+    etc.
+
+* world block generation
+  - terrain generation
+  - biomes
+  - caves
+  - tesselation
+  - virtual addressing for chunks
+
+* sky
+  - day/night cycle
+  - clouds
+
+
+
+# terrain generation notes
+
+http://pcg.wikidot.com/pcg-algorithm:whittaker-diagram
+
+http://www.neilblevins.com/cg_education/procedural_noise/procedural_noise.html
+
+- biome selected based on temperature + humidity
+- generate base terrain using 3d simplex noise + biome selection
+- carve caves
+- ore distribution
+- water, lava
+
+Musgrave's Ridged Multifractal - good for mountain ranges
+
+
+# render engine
+
+- some things need to be deferred for later:
+  - alpha blended things, defer and sort
+  - ideally other things should be sorted by material
+  - debug rendered lines and spheres and so on
+
+- ui, text
+- make a ui texture, render in 4x scale (nearest)
+

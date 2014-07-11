@@ -22,26 +22,38 @@ struct thing {
 typedef uint8_t block;
 
 const int CHUNK_SIZE = 16;
-const int INITIAL_CHUNK_CACHE_SIZE_MB = 64;
 
-// for 16^3 chunks and 1 byte/voxel = 16k chunks in cache if 64MB chunk cache
-const int INITIAL_CHUNK_CACHE_SIZE = (INITIAL_CHUNK_CACHE_SIZE_MB * 1024 * 1024)
-	/ (sizeof(block) * CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE);
+inline uint64_t chunk_hash(int x, int y, int z) {
+	uint64_t hash = 0;
+	for (size_t i = 0; i < 21; ++i) {
+		hash += (z & 1) + ((x & 1) << 1) + ((y & 1) << 2);
+		x >>= 1;
+		y >>= 1;
+		z >>= 1;
+	}
+	return hash;
+}
 
 struct chunk {
-	uint32_t id;
-	int16_t x, y, z;
-	uint16_t flags;
+	int x, y, z;
+	Mesh* mesh;
 	// voxel data for chunk
 	block blocks[CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE];
-};
 
-// the chunk cache has a maximum size
-// and background loader threads
-struct chunk_cache {
-	chunk cache[INITIAL_CHUNK_CACHE_SIZE];
+	Mesh* tesselate();
 };
 
 struct world {
+	world();
+	void render();
+	// generate chunk column at (x, z)
+	void generate(int x, int z);
+
 	uint64_t seed;
+	std::map<uint64_t, chunk> chunks;
+	std::vector<Mesh*> meshes;
+
 };
+
+chunk generate_chunk(int x, int y, int z, uint64_t seed);
+

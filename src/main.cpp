@@ -18,6 +18,9 @@ namespace {
 
 	struct Player {
 
+		Player() : pos(0, 0, 0), angle(0) {
+		}
+
 		void move(const glm::vec3& dir) {
 			mat4 ori = glm::rotate(mat4(), angle, vec3(0.f, 1.f, 0.f));
 			pos += vec3(vec4(dir, 1.f) * ori);
@@ -40,6 +43,9 @@ namespace {
 	};
 
 	struct Camera {
+		Camera() : offset(0, 0, 0), angle(0) {
+		}
+
 		// position and orientation of camera
 		// relative to player
 		// an fps camera is offset from the player position
@@ -47,11 +53,11 @@ namespace {
 		// it can then rotate in a limited range around its
 		// local Z axis
 		vec3 offset;
-		float angle; // look angle around Z axis (radians)
+		float angle; // look angle around X axis (radians)
 
-		void lookz(float z) {
+		void lookx(float x) {
 			const float halfpi = PI*0.5f;
-			angle += z;
+			angle += x;
 			if (angle > halfpi)
 				angle = halfpi;
 			if (angle < -halfpi)
@@ -59,16 +65,16 @@ namespace {
 		}
 	};
 
-	// calculate view matrix
+	// calculate world -> view matrix
 	mat4 make_view_matrix(const Player& player, const Camera& camera) {
 		mat4 view;
 		view = glm::rotate(view, camera.angle, vec3(1.f, 0.f, 0.f));
 		view = glm::rotate(view, player.angle, vec3(0.f, 1.f, 0.f));
-		view = glm::translate(view, player.pos - camera.offset);
+		view = glm::translate(view, - player.pos - camera.offset);
 		return view;
 	}
 
-	// the sky view matrix
+	// calculate world -> view matrix with no translation
 	mat4 make_sky_view_matrix(const Player& player, const Camera& camera) {
 		mat4 view;
 		view = glm::rotate(view, camera.angle, vec3(1.f, 0.f, 0.f));
@@ -97,7 +103,7 @@ namespace {
 			init_gl();
 			load_shaders();
 
-			player.pos = vec3(3.f, 0.f, 3.f);
+			player.pos = vec3(0.f, 0.f, 5.f);
 			player.angle = 0.f;
 			camera.offset = vec3(0.f, 1.85f, 0.f);
 			camera.angle = 0.f;
@@ -117,7 +123,7 @@ namespace {
 
 			make_sky();
 			make_groundplane();
-			make_cube();
+			make_cubes();
 
 			//player.look_at(vec3(3,3,5), vec3(0,0,0));
 		}
@@ -148,13 +154,13 @@ namespace {
 
 			const Uint8* state = SDL_GetKeyboardState(NULL);
 			if (state[SDL_SCANCODE_A])
-				player.move(vec3(speed, 0.f, 0.f));
-			if (state[SDL_SCANCODE_D])
 				player.move(vec3(-speed, 0.f, 0.f));
+			if (state[SDL_SCANCODE_D])
+				player.move(vec3(speed, 0.f, 0.f));
 			if (state[SDL_SCANCODE_W])
-				player.move(vec3(0.f, 0.f, speed));
-			if (state[SDL_SCANCODE_S])
 				player.move(vec3(0.f, 0.f, -speed));
+			if (state[SDL_SCANCODE_S])
+				player.move(vec3(0.f, 0.f, speed));
 
 			int mouse_dx, mouse_dy;
 			uint32_t mouse_buttons;
@@ -165,7 +171,7 @@ namespace {
 			if (mouse_dx != 0)
 				player.looky(mouse_dx * dt * xsens);
 			if (mouse_dy != 0)
-				camera.lookz(mouse_dy * dt * ysens);
+				camera.lookx(mouse_dy * dt * ysens);
 		}
 
 
@@ -208,15 +214,35 @@ namespace {
 
 			render_groundplane();
 
-			render_cube();
+			render_cubes();
 
 			screen.present();
 
 			SDL_WarpMouseInWindow(screen.window, sz.x >> 1, sz.y >> 1);
 		}
 
-		void make_cube() {
-			cube.make(vec3(0.5f, 0.5f, 0.5f));
+		void make_cubes() {
+			{
+				geo::cube cube1;
+				cube1.make(vec3(0.5f, 0.5f, 0.5f));
+				cube1.transform = glm::translate(vec3(0.f, 0.5f, 0.f));
+				cubes.emplace_back(cube1);
+			}
+
+			for (int i = -10; i < 10; ++i) {
+				geo::cube cube1;
+				cube1.make(vec3(0.25f, 0.25f, 0.25f));
+				cube1.transform = glm::translate(vec3(1.f + i, 0.5f, 0.f));
+				cubes.emplace_back(cube1);
+			}
+
+			for (int i = -10; i < 10; ++i) {
+				geo::cube cube1;
+				cube1.make(vec3(0.25f, 0.25f, 0.25f));
+				cube1.transform = glm::translate(vec3(0.f, 0.5f, 1.f + i));
+				cubes.emplace_back(cube1);
+			}
+
 			a = 0.f;
 		}
 
@@ -229,24 +255,24 @@ namespace {
 
 
 		void render_groundplane() {
-			glVertexAttrib3f(3u, 0.2f, 0.6f, 0.2f);
 			plane.render(material_basic, proj, view);
 		}
 
-		void render_cube() {
-			cube.transform = glm::rotate(a*0.1f, vec3(0.f, 1.f, 0.f)) * glm::translate(vec3(0.f, 1.f, 0.f));
+		void render_cubes() {
 			a += 0.04f, b += 0.02f, c += 0.03f;
 
 			Material* material = material_basic;
 			material->use();
 			material->uniform("projection", proj);
 			material->uniform("view", view);
-			material->uniform("model", cube.transform);
 			cube_tex->bind(0);
 			material->uniform("tex0", 0);
 
-			glVertexAttrib3f(3u, 0.3f, 0.0f, 0.8f);
-			cube.render(proj, view);
+
+			for (auto& cube : cubes) {
+				material->uniform("model", cube.transform);
+				cube.render(proj, view);
+			}
 		}
 
 		void make_sky() {
@@ -255,7 +281,6 @@ namespace {
 
 		void render_sky() {
 			mat4 skyview = make_sky_view_matrix(player, camera);
-			glVertexAttrib3f(3u, 1.f, 1.f, 1.f);
 
 			Material* material = material_sky;
 			material->use();
@@ -274,7 +299,7 @@ namespace {
 		Player player;
 		Camera camera;
 		geo::plane plane;
-		geo::cube cube;
+		std::vector<geo::cube> cubes;
 		geo::cube sky;
 		float a, b, c;
 		bool wireframe_mode;

@@ -121,7 +121,6 @@ namespace geo {
 		glVertexAttribPointer(0u, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), 0);
 		glVertexAttribPointer(1u, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (const void*)(3*sizeof(float)));
 		glVertexAttribPointer(2u, 2, GL_FLOAT, GL_TRUE, 8*sizeof(float), (const void*)(6*sizeof(float)));
-		glVertexAttrib3f(3u, 0.2f, 0.6f, 0.2f);
 	}
 
 }

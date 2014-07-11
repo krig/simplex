@@ -10,6 +10,6 @@ out vec4 fragment;
 uniform sampler2D tex0;
 
 void main(){
-	float intensity = max(0.0, dot(normalize(out_normal), normalize(vec3(0.3, 1.0, 0.2))));
+	float intensity = max(0.0, dot(normalize(out_normal), normalize(vec3(0.5, 1.0, 0.5))));
 	fragment = vec4(texture(tex0, out_texcoord).rgb * out_color * (0.2 + intensity), 1.0);
 }
