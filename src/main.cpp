@@ -58,7 +58,7 @@ namespace {
 
 		void pitch(float x) {
 			const float halfpi = PI*0.5f;
-			angle += x;
+			angle -= x;
 			if (angle > halfpi)
 				angle = halfpi;
 			if (angle < -halfpi)
@@ -119,6 +119,8 @@ namespace {
 			player.angle = 0.f;
 			camera.offset = vec3(0.f, 1.85f, 0.f);
 			camera.angle = 0.f;
+
+			world.init(util::randint());
 		}
 
 		void init_gl() {
@@ -234,7 +236,9 @@ namespace {
 
 			glClear(GL_DEPTH_BUFFER_BIT);
 
-			render_groundplane();
+			//render_groundplane();
+
+			world.render();
 
 			render_cubes();
 
@@ -298,7 +302,7 @@ namespace {
 		}
 
 		void make_sky() {
-			sky.make(vec3(10.f, 10.f, 10.f), true);
+			sky.make(vec3(5.f, 5.f, 5.f), true);
 		}
 
 		void render_sky() {
@@ -309,8 +313,8 @@ namespace {
 			material->uniform("projection", proj);
 			material->uniform("view", skyview);
 			material->uniform("model", sky.transform);
-			material->uniform("sky_dark", vec3(0.3f, 0.3f, 0.6f));
-			material->uniform("sky_light", vec3(0.5f, 0.5f, 0.8f));
+			material->uniform("sky_dark", vec3(0.3f, 0.333f, 0.4f));
+			material->uniform("sky_light", vec3(0.86f, 0.8f, 0.91f));
 			sky.render(proj, skyview);
 		}
 
@@ -320,6 +324,7 @@ namespace {
 		Material* material_sky;
 		Player player;
 		Camera camera;
+		World world;
 		geo::plane plane;
 		std::vector<geo::cube> cubes;
 		geo::cube sky;

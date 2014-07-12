@@ -11,6 +11,6 @@ in vec3 in_color;
 out float gradient;
 
 void main(){
+    gradient = position.y;
 	gl_Position = projection * view * model * vec4(position, 1.0);
-    gradient = position.y / 10.0;
 }

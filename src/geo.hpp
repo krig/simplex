@@ -15,9 +15,7 @@ namespace geo {
 		}
 
 		// create the cube geometry
-		// if the invert flag is true, the cube is
-		// created with inward-facing triangles
-		void make(const vec3& size, bool invert = false);
+		void make(const vec3& size, bool skybox = false);
 
 		void render(const mat4& proj, const mat4& view) {
 			bind_vao(array);

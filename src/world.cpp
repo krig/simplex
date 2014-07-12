@@ -45,8 +45,13 @@ Mesh* chunk::tesselate() {
 	return nullptr;
 }
 
-world::world() {
-	seed = util::randint();
+World::World() {
+}
+
+void World::init(uint64_t seed) {
+	this->seed = seed;
+	rng.seed(seed);
+
 	//chunks.reserve(16*10*10);
 	//for (int y = 0; y < 16; ++y) {
 	//	for (int z = -10; z < 10; ++z) {
@@ -57,7 +62,7 @@ world::world() {
 	//}
 }
 
-void world::generate(int x, int z) {
+void World::generate(int x, int z) {
 	for (int y = 0; y < 16; ++y) {
 		uint64_t hash = chunk_hash(x, y, z);
 		if (chunks.find(hash) == chunks.end()) {
@@ -66,7 +71,7 @@ void world::generate(int x, int z) {
 	}
 }
 
-void world::render() {
+void World::render() {
 	for (Mesh* m : meshes) {
 		bind_vao(m->vao);
 		glEnableVertexAttribArray(0);

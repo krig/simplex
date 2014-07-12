@@ -1,4 +1,5 @@
 #pragma once
+#include <random>
 
 struct thing {
 	glm::mat4 pos;
@@ -43,12 +44,14 @@ struct chunk {
 	Mesh* tesselate();
 };
 
-struct world {
-	world();
+struct World {
+	World();
+	void init(uint64_t seed);
 	void render();
 	// generate chunk column at (x, z)
 	void generate(int x, int z);
 
+	std::mt19937_64 rng;
 	uint64_t seed;
 	std::map<uint64_t, chunk> chunks;
 	std::vector<Mesh*> meshes;
