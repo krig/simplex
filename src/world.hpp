@@ -23,6 +23,8 @@ struct thing {
 typedef uint8_t block;
 
 const int CHUNK_SIZE = 16;
+const int CHUNK_AREA = CHUNK_SIZE * CHUNK_SIZE;
+const int WORLD_HEIGHT = 256;
 
 inline uint64_t chunk_hash(int x, int y, int z) {
 	uint64_t hash = 0;
@@ -42,6 +44,22 @@ struct chunk {
 	block blocks[CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE];
 
 	Mesh* tesselate();
+};
+
+// SubChunk
+// 16x16x16
+// subchunks that are all air point
+// to a w/o EmptySubChunk instance
+struct SubChunk {
+};
+
+struct EmptySubChunk {
+};
+
+struct Chunk {
+	int x, y, z;
+	std::vector<Mesh*> meshes;
+	SubChunk* subchunks[16];
 };
 
 struct World {

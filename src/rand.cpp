@@ -1,4 +1,3 @@
-#include <random>
 #include <time.h>
 #include "rand.hpp"
 
@@ -15,5 +14,3 @@ namespace util {
 		return rng();
 	}
 }
-
-
