@@ -21,6 +21,10 @@ namespace {
 	}
 }
 
+void watch_assets(bool enable) {
+	// TODO
+}
+
 Texture* load_texture(const char* name) {
 	SDL_Surface* image = IMG_Load(name);
 	if (!image)
