@@ -27,28 +27,43 @@ class Mesher {
 		uint8_t length;
 	};
 
-	struct Array {
-		Format _format[32];
-		std::vector<uint8_t> data;
-	};
+	Mesher& init(GLenum mode) {
+		_mode = mode;
+	}
 
+	Mesh* end() {
+		return nullptr;
+	}
 
-	void set_mode(GLenum mode);
-	Mesher& begin(Format e0);
-	void end();
+	Mesher& vertex(float x, float y, float z) {
+		return *this;
+	}
 
-	Mesher& vertex(float x, float y, float z);
+	Mesher& normal(float x, float y, float z) {
+		return *this;
+	}
 
-	Mesher& color(float r, float g, float b);
+	Mesher& color(float r, float g, float b) {
+		return *this;
+	}
 
-	GLenum mode;
-	Array* _current;
-	std::vector<Array> _arrays;
+	Mesher& texcoord(float u, float v) {
+		return *this;
+	}
+
+	GLenum _mode;
+	Format _format[32];
+	std::vector<float> _current;
+	std::vector<float> _array;
+	std::vector<uint32_t> _indices;
 };
 
-
-vb.begin({Mesher::Use::Vertex, Mesher::Type::Float, 3});
-vb.end();
-
-vb.begin({Mesher::Use::Normal, Mesher::Type::Float, 2});
-vb.end();
+/*
+  Mesher mesh;
+  vbo = mesh
+  .init(GL_TRIANGLES)
+  .vertex(0, 0, 0)
+  .vertex(0, 0, 0)
+  .vertex(0, 0, 0)
+  .end();
+ */

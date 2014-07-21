@@ -4,6 +4,15 @@
 
 namespace geo {
 
+	// a tesselator which produces vertex data
+	// optionally add normals, texcoords, colors
+	// or other per-vertex data
+	// allow access to vertex data directly or
+	// upload to opengl and return a VAO name
+
+	// something which holds a VAO and information
+	// about how to render it with a given material
+
 	struct cube_vert {
 		vec3 pos;
 		vec3 normal;

@@ -204,17 +204,48 @@ struct Texture;
 // that way everything else can just use pointers, pointers are guaranteed
 // to be valid by asset manager
 
+struct chunkpos {
+	int32_t x;
+	int32_t z;
+};
+
+// position in chunk coordinates
+// allows for high precision even
+// at crazy coordinates
+struct SceneLocation {
+	chunkpos chunk;
+	vec3 offset;
+	vec3 forward;
+	vec3 up;
+
+	// position relative to root chunk
+	vec3 position(chunkpos root) const {
+	}
+
+	// transform matrix relative to root chunk
+	mat4 transform(chunkpos root) const {
+	}
+
+	// orientation
+	mat3 orientation() const {
+	}
+};
+
 // instance: mesh + material + transform
-struct Instance {
+struct Instance : public SceneLocation {
 	Mesh* mesh;
 	Material* material;
 	std::vector<Texture*> textures;
-	mat4 transform;
 };
 
+
 // should the camera just be an instance with a null mesh and material?
-struct Camera {
-	mat4 transform;
+struct Camera : public SceneLocation {
+
+	// calculates viewmodel matrix relative
+	// to the root chunk
+	mat4 viewmodel(chunkpos root) const {
+	}
 };
 
 // * in game, keep separate arrays for instances of different type
