@@ -9,22 +9,6 @@ using glm::vec4;
 using glm::mat3;
 using glm::mat4;
 
-struct error : public std::exception {
-	error(const char* fmt, ...) {
-		va_list va_args;
-		va_start(va_args, fmt);
-		vsnprintf(_buf, 2048, fmt, va_args);
-		va_end(va_args);
-	}
-
-	virtual const char* what() const noexcept {
-		return _buf;
-	}
-
-private:
-	char _buf[2048];
-};
-
 struct SDL {
 
 	SDL() {

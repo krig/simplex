@@ -322,3 +322,15 @@ generating extra faces on chunk borders (since we can check for air
 blocks in neighbour chunks)
 
 
+
+* asset management:
+
+  - load
+  - inotify reload
+
+* builtin web server for realtime tweaking
+
+  - expose internal variables
+  - save state of variables with history
+
+

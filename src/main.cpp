@@ -371,6 +371,8 @@ namespace {
 	}
 }
 
+#include "notify.hpp"
+
 int main(int argc, char* argv[]) {
 	try {
 		util::randseed();

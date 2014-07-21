@@ -21,6 +21,22 @@ using std::string;
 
 #define ASIZE(a) (sizeof(a)/sizeof((a)[0]))
 
+struct error : public std::exception {
+	error(const char* fmt, ...) {
+		va_list va_args;
+		va_start(va_args, fmt);
+		vsnprintf(_buf, 2048, fmt, va_args);
+		va_end(va_args);
+	}
+
+	virtual const char* what() const noexcept {
+		return _buf;
+	}
+
+private:
+	char _buf[2048];
+};
+
 namespace std {
 	inline std::vector<std::string>& operator<<(std::vector<std::string>& v, const char* t) {
 		v.push_back(t);
