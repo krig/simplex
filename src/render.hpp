@@ -109,7 +109,7 @@ struct shader {
 			glGetShaderiv(name, GL_INFO_LOG_LENGTH, &length);
 			std::vector<GLchar> info(length);
 			glGetShaderInfoLog(name, length, nullptr, info.data());
-			fprintf(stderr, "glCompileShader failed:\n%s\n", info.data());
+			LOG_ERROR("glCompileShader failed: %s", info.data());
 		}
 		return status != GL_FALSE;
 	}
@@ -132,7 +132,7 @@ inline bool compile_program(GLuint program, GLuint shader1, GLuint shader2) {
 		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
 		std::vector<GLchar> info(length);
 		glGetProgramInfoLog(program, length, nullptr, info.data());
-		fprintf(stderr, "glLinkProgram failed: %s\n", info.data());
+		LOG_ERROR("glLinkProgram failed: %s", info.data());
 	}
 	glDetachShader(program, shader1);
 	glDetachShader(program, shader2);
@@ -145,11 +145,15 @@ inline GLuint load_program(const char* vertex_shader, const char* fragment_shade
 	shader f(GL_FRAGMENT_SHADER);
 	string vsh = util::read_file(vertex_shader);
 	string fsh = util::read_file(fragment_shader);
-	v.compile(vsh.c_str());
-	f.compile(fsh.c_str());
+	if (!v.compile(vsh.c_str()))
+		return 0;
+	if (!f.compile(fsh.c_str()))
+		return 0;
 	GLuint program = glCreateProgram();
-	if (!compile_program(program, v.name, f.name))
-		throw error("Failed to compile v='%s', f='%s'", vertex_shader, fragment_shader);
+	if (!compile_program(program, v.name, f.name)) {
+		LOG_ERROR("Failed to compile v='%s', f='%s'", vertex_shader, fragment_shader);
+		return 0;
+	}
 	return program;
 }
 
@@ -181,7 +185,7 @@ GLuint make_buffer(GLenum target, const V& v, GLenum usage = GL_STATIC_DRAW) {
 // defined in asset manager
 struct Mesh;
 struct Material;
-struct Texture;
+struct Texture2D;
 
 // meshes and materials are handled by the asset manager (only loaded once,
 // background loading and swap in etc.)
@@ -219,7 +223,7 @@ struct SceneLocation {
 struct Instance : public SceneLocation {
 	Mesh* mesh;
 	Material* material;
-	std::vector<Texture*> textures;
+	std::vector<Texture2D*> textures;
 };
 
 

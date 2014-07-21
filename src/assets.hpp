@@ -2,7 +2,7 @@
 
 struct Mesh;
 struct Material;
-struct Texture;
+struct Texture2D;
 
 
 // mesh -> vertex data
@@ -37,6 +37,8 @@ struct Mesh {
 
 struct Asset {
 	virtual ~Asset() {}
+	virtual void load() = 0;
+	string name;
 	Asset* next;
 };
 
@@ -80,31 +82,30 @@ struct Material : public Asset {
 		glEnableVertexAttribArray(i);
 	}
 
+	void load();
+
 	GLuint program;
 };
 
-struct Texture : public Asset {
+struct Texture2D : public Asset {
+	Texture2D();
+	~Texture2D();
 
-	~Texture() {
-		glDeleteTextures(1, &texture);
-	}
+	void load();
+	void bind(int i);
 
-	void bind(int i) {
-		glActiveTexture(GL_TEXTURE0 + i);
-		glBindTexture(GL_TEXTURE_2D, texture);
-	}
-
-	GLuint texture;
+	GLuint id;
 	int w, h;
 };
 
-// watch for asset changes and reload/recreate if this happens
-// works for textures, materials, scripts?
-void watch_assets(bool enable = true);
-
-Texture* load_texture(const char* name);
+void update_assets();
+Texture2D* load_texture(const char* name);
 Material* load_material(const char* name);
-void release_assets();
+
+struct Assets {
+	Assets();
+	~Assets();
+};
 
 // material <name>
 // vertexshader <name>

@@ -9,7 +9,7 @@ struct Notify {
 	static const size_t BUF_SIZE = MIN_READ_SIZE * 8;
 
 	Notify() {
-		_fd = inotify_init();
+		_fd = inotify_init1(IN_NONBLOCK);
 		_fill = 0;
 		memset(_buf, 0, BUF_SIZE);
 	}
@@ -51,7 +51,6 @@ private:
 
 	void _refill() {
 		ssize_t rc = read(_fd, _buf + _fill, BUF_SIZE - _fill);
-		LOG_INFO("read returned %ld (fill=%ld)", rc, _fill);
 		if (rc < 0) {
 			if (errno == EAGAIN || errno == EWOULDBLOCK)
 				return;
@@ -59,6 +58,7 @@ private:
 				return;
 			throw error("notify: %s", strerror(errno));
 		}
+		LOG_INFO("read returned %ld (fill=%ld)", rc, _fill);
 		_fill += rc;
 	}
 

@@ -101,7 +101,6 @@ namespace {
 		}
 
 		~Game() {
-			release_assets();
 		}
 
 		void init() {
@@ -202,6 +201,7 @@ namespace {
 		void tick(double dt) {
 			//printf("%d, %d, %u\n", x, y, buttons);
 
+			update_assets();
 			update_daycycle(dt);
 			update_chunks(dt);
 			update_ecosystem(dt);
@@ -319,7 +319,7 @@ namespace {
 		}
 
 		Window screen;
-		Texture* cube_tex;
+		Texture2D* cube_tex;
 		Material* material_basic;
 		Material* material_sky;
 		Player player;
@@ -371,11 +371,10 @@ namespace {
 	}
 }
 
-#include "notify.hpp"
-
 int main(int argc, char* argv[]) {
 	try {
 		util::randseed();
+		Assets assets;
 		SDL sdl;
 		sdl.init();
 		mainloop();
