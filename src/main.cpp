@@ -5,42 +5,14 @@
 #include "geo.hpp"
 #include "aabb.hpp"
 #include "assets.hpp"
+#include "player.hpp"
+#include "matrixstack.hpp"
 
 namespace {
 	const double TARGET_FPS = 120.0;
-	const float PI = 3.14159265358979323846f;
-	const int SCR_W = 640;
+	const int SCR_W = 960;
 	const int SCR_H = 480;
 
-	constexpr float deg2rad(float deg) {
-		return (deg / 360.f) * 2.f * PI;
-	}
-
-	struct Player {
-
-		Player() : pos(0, 0, 0), angle(0) {
-		}
-
-		void move(const glm::vec3& dir) {
-			mat4 ori = glm::rotate(mat4(), angle, vec3(0.f, 1.f, 0.f));
-			pos += vec3(ori * vec4(dir, 1.f));
-		}
-
-		void rotate(float by) {
-			const float twopi = PI*2.f;
-			angle -= by;
-			while (angle < 0.f)
-				angle += twopi;
-			while (angle > twopi)
-				angle -= twopi;
-		}
-
-		void jump() {
-		}
-
-		vec3 pos;
-		float angle; // look angle around Y axis (radians), yaw
-	};
 
 	struct Camera {
 		Camera() : offset(0, 0, 0), angle(0) {
@@ -57,20 +29,19 @@ namespace {
 		vec3 bob; // view bob (while walking / running)
 
 		void pitch(float x) {
-			const float halfpi = PI*0.5f;
 			angle -= x;
-			if (angle > halfpi)
-				angle = halfpi;
-			if (angle < -halfpi)
-				angle = -halfpi;
+			if (angle > HALFPI)
+				angle = HALFPI;
+			if (angle < -HALFPI)
+				angle = -HALFPI;
 		}
 	};
 
 	mat4 fps_view(vec3 eye, float pitch, float yaw) {
-		float cosPitch = cos(pitch);
-		float sinPitch = sin(pitch);
-		float cosYaw = cos(yaw);
-		float sinYaw = sin(yaw);
+		float cosPitch = cosf(pitch);
+		float sinPitch = sinf(pitch);
+		float cosYaw = cosf(yaw);
+		float sinYaw = sinf(yaw);
 		vec3 xaxis(cosYaw, 0, -sinYaw);
 		vec3 yaxis(sinYaw * sinPitch, cosPitch, cosYaw * sinPitch);
 		vec3 zaxis(sinYaw * cosPitch, -sinPitch, cosPitch * cosYaw);
@@ -110,6 +81,7 @@ namespace {
 			//Mix_AllocateChannels(3);
 
 			SDL_SetRelativeMouseMode(SDL_TRUE);
+			mouse_captured = true;
 
 			init_gl();
 			load_shaders();
@@ -139,6 +111,10 @@ namespace {
 			make_cubes();
 
 			//player.look_at(vec3(3,3,5), vec3(0,0,0));
+
+			SDL_Point sz = screen.get_size();
+			projection.load(glm::perspective<float>(deg2rad(50.f), (float)sz.x/(float)sz.y, 0.1, 100.0));
+			glViewport(0, 0, sz.x, sz.y);
 		}
 
 		void load_shaders() {
@@ -148,9 +124,11 @@ namespace {
 		}
 
 		void handle_event(SDL_Event* e) {
-			if (e->type == SDL_QUIT) {
+			switch (e->type) {
+			case SDL_QUIT: {
 				running = false;
-			} else if (e->type == SDL_KEYDOWN) {
+			} break;
+			case SDL_KEYDOWN: {
 				switch (e->key.keysym.sym) {
 				case SDLK_F1: {
 					wireframe_mode = !wireframe_mode;
@@ -159,10 +137,27 @@ namespace {
 					running  = false;
 				} break;
 				}
+			} break;
+			case SDL_WINDOWEVENT: {
+				switch (e->window.event) {
+				case SDL_WINDOWEVENT_RESIZED: {
+					SDL_Point sz = { e->window.data1, e->window.data2 };
+					projection.load(glm::perspective<float>(deg2rad(50.f), (float)sz.x/(float)sz.y, 0.1, 100.0));
+					glViewport(0, 0, sz.x, sz.y);
+				} break;
+				case SDL_WINDOWEVENT_FOCUS_GAINED: {
+				} break;
+				case SDL_WINDOWEVENT_FOCUS_LOST: {
+					SDL_SetRelativeMouseMode(SDL_FALSE);
+					mouse_captured = false;
+				} break;
+				case SDL_WINDOWEVENT_CLOSE: {
+					running = false;
+				} break;
+				}
+			} break;
 			}
 		}
-
-		vec3 bobd;
 
 		void handle_input(double dt) {
 			float speed = 6.f * dt;
@@ -185,16 +180,22 @@ namespace {
 				bobd = vec3(0, 0, 0);
 			}
 
-			int mouse_dx, mouse_dy;
-			uint32_t mouse_buttons;
-			mouse_buttons = SDL_GetRelativeMouseState(&mouse_dx, &mouse_dy);
-			float xsens = 1.f/(2.f*PI);
-			float ysens = 1.f/(2.f*PI);
+			if (mouse_captured) {
+				int mouse_dx, mouse_dy;
+				uint32_t mouse_buttons;
+				mouse_buttons = SDL_GetRelativeMouseState(&mouse_dx, &mouse_dy);
+				(void)mouse_buttons;
+				float xsens = 1.f / TWOPI;
+				float ysens = 1.f / TWOPI;
 
-			if (mouse_dx != 0)
-				player.rotate(mouse_dx * dt * xsens);
-			if (mouse_dy != 0)
-				camera.pitch(mouse_dy * dt * ysens);
+				if (mouse_dx != 0)
+					player.rotate(mouse_dx * dt * xsens);
+				if (mouse_dy != 0)
+					camera.pitch(mouse_dy * dt * ysens);
+			} else if (SDL_GetMouseState(0, 0) & SDL_BUTTON(SDL_BUTTON_LEFT)) {
+				mouse_captured = true;
+				SDL_SetRelativeMouseMode(SDL_TRUE);
+			}
 		}
 
 
@@ -222,15 +223,13 @@ namespace {
 
 		void render() {
 			SDL_Point sz = screen.get_size();
-			proj = glm::perspective<float>(deg2rad(50.f), (float)sz.x/(float)sz.y, 0.1, 100.0);
-			glViewport(0, 0, sz.x, sz.y);
 			glClearColor(0.2f, 0.2f, 0.2f, 0.0f);
 			glClearDepth(1.f);
 			glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
 			glPolygonMode(GL_FRONT, wireframe_mode ? GL_LINE : GL_FILL);
 
-			view = make_view_matrix(player, camera);
+			modelview.load(make_view_matrix(player, camera));
 
 			render_sky();
 
@@ -244,7 +243,9 @@ namespace {
 
 			screen.present();
 
-			SDL_WarpMouseInWindow(screen.window, sz.x >> 1, sz.y >> 1);
+			if (mouse_captured) {
+				SDL_WarpMouseInWindow(screen.window, sz.x >> 1, sz.y >> 1);
+			}
 		}
 
 		void make_cubes() {
@@ -276,28 +277,25 @@ namespace {
 			plane.make();
 		}
 
-		mat4 proj;
-		mat4 view;
-
-
 		void render_groundplane() {
-			plane.render(material_basic, proj, view);
+			plane.render(material_basic, projection.get(), modelview.get());
 		}
 
 		void render_cubes() {
 			a += 0.04f, b += 0.02f, c += 0.03f;
 
 			Material* material = material_basic;
-			material->use();
-			material->uniform("projection", proj);
-			material->uniform("view", view);
 			cube_tex->bind(0);
+			material->use();
 			material->uniform("tex0", 0);
 
-
 			for (auto& cube : cubes) {
-				material->uniform("model", cube.transform);
-				cube.render(proj, view);
+				modelview.push();
+				modelview *= cube.transform;
+				material->uniform("MVP", projection.get() * modelview.get());
+				material->uniform("normal_matrix", mat3(cube.transform));
+				cube.render(projection.get(), modelview.get());
+				modelview.pop();
 			}
 		}
 
@@ -310,24 +308,32 @@ namespace {
 
 			Material* material = material_sky;
 			material->use();
-			material->uniform("projection", proj);
+			material->uniform("projection", projection.get());
 			material->uniform("view", skyview);
 			material->uniform("model", sky.transform);
 			material->uniform("sky_dark", vec3(0.3f, 0.333f, 0.4f));
 			material->uniform("sky_light", vec3(0.86f, 0.8f, 0.91f));
-			sky.render(proj, skyview);
+			sky.render(projection.get(), skyview);
 		}
 
 		Window screen;
-		Texture2D* cube_tex;
-		Material* material_basic;
-		Material* material_sky;
+
+		bool mouse_captured;
+
+		MatrixStack<8> projection;
+		MatrixStack<32> modelview;
+
 		Player player;
 		Camera camera;
 		World world;
+
+		Texture2D* cube_tex;
+		Material* material_basic;
+		Material* material_sky;
 		geo::plane plane;
 		std::vector<geo::cube> cubes;
 		geo::cube sky;
+		vec3 bobd;
 		float a, b, c;
 		bool wireframe_mode;
 		bool running;

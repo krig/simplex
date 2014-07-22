@@ -13,6 +13,8 @@ namespace geo {
 	// something which holds a VAO and information
 	// about how to render it with a given material
 
+	
+
 	struct cube_vert {
 		vec3 pos;
 		vec3 normal;

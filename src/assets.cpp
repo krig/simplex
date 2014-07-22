@@ -100,6 +100,72 @@ Texture2D* load_texture(const char* name) {
 	return t;
 }
 
+namespace {
+struct Shader {
+	Shader(GLenum type) {
+		name = glCreateShader(type);
+	}
+
+	~Shader() {
+		glDeleteShader(name);
+	}
+
+	bool compile(const char* source) {
+		glShaderSource(name, 1, &source, nullptr);
+		glCompileShader(name);
+		GLint status;
+		glGetShaderiv(name, GL_COMPILE_STATUS, &status);
+		if (status == GL_FALSE) {
+			GLint length;
+			glGetShaderiv(name, GL_INFO_LOG_LENGTH, &length);
+			std::vector<GLchar> info(length);
+			glGetShaderInfoLog(name, length, nullptr, info.data());
+			LOG_ERROR("glCompileShader failed: %s", info.data());
+		}
+		return status != GL_FALSE;
+	}
+
+	GLuint name;
+};
+
+inline bool compile_program(GLuint program, GLuint shader1, GLuint shader2) {
+	glAttachShader(program, shader1);
+	glAttachShader(program, shader2);
+	glLinkProgram(program);
+	GLint status;
+	glGetProgramiv(program, GL_LINK_STATUS, &status);
+	if (status == GL_FALSE) {
+		GLint length;
+		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
+		std::vector<GLchar> info(length);
+		glGetProgramInfoLog(program, length, nullptr, info.data());
+		LOG_ERROR("glLinkProgram failed: %s", info.data());
+	}
+	glDetachShader(program, shader1);
+	glDetachShader(program, shader2);
+	return status != GL_FALSE;
+}
+
+
+inline GLuint load_program(const char* vertex_shader, const char* fragment_shader) {
+	Shader v(GL_VERTEX_SHADER);
+	Shader f(GL_FRAGMENT_SHADER);
+	string vsh = util::read_file(vertex_shader);
+	string fsh = util::read_file(fragment_shader);
+	if (!v.compile(vsh.c_str()))
+		return 0;
+	if (!f.compile(fsh.c_str()))
+		return 0;
+	GLuint program = glCreateProgram();
+	if (!compile_program(program, v.name, f.name)) {
+		LOG_ERROR("Failed to compile v='%s', f='%s'", vertex_shader, fragment_shader);
+		return 0;
+	}
+	return program;
+}
+
+}
+
 void Material::load() {
 	util::strfmt<512> vsh_name("data/%s.vsh", name.c_str());
 	util::strfmt<512> fsh_name("data/%s.fsh", name.c_str());

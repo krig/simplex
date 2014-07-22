@@ -35,9 +35,6 @@ struct ChunkData {
 
 struct Chunk : public ChunkData {
 
-	// biome of each block column in chunk
-	BiomeType biome_map[CHUNK_AREA];
-
     // height map of chunk, determines to which
 	// height rain/snow falls
 	int precipitation_map[CHUNK_AREA];

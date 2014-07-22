@@ -333,4 +333,40 @@ blocks in neighbour chunks)
   - expose internal variables
   - save state of variables with history
 
+# game scripting / definition
+
+- have a single big database file with all configurables, written in
+  yaml - that file can include other files maybe?
+
+
+
+# materials
+
+- shader
+- textures
+- transparency
+- mapping shader to a mesh -- if the mesh doesn't have normals,
+  generate normals.. if no colors, generate colors. and so on.
+  but also allow for completely custom materials / meshes
+- flags like lighting, fog, emits light, reflective, animated...
+- blend function...
+- step sound, type of particle emitted, physical properties,
+  collisions
+
+# meshes
+
+- generated vertex array objects
+  - vertex
+  - normal
+  - binormal
+  - tangent
+  - color
+  - ...etc
+  - tesselator
+  - spheres, boxes, etc.
+
+- hierarchical animated objects
+  - generate meshes...
+
+# renderable
 

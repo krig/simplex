@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string>
 #include <vector>
+#include <array>
 #include <map>
 #include <memory>
 #include <SDL.h>
@@ -51,6 +52,15 @@ namespace util {
 			vec.resize((size & ~3) + 4, 0);
 	}
 }
+
+constexpr double PI = M_PI;
+constexpr double TWOPI = PI * 2.0;
+constexpr double HALFPI = PI * 0.5;
+
+inline float deg2rad(float deg) {
+	return (deg / 360.f) * TWOPI;
+}
+
 
 #include "strfmt.hpp"
 #include "logging.hpp"
