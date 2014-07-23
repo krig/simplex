@@ -28,7 +28,7 @@ namespace geo {
 		// create the cube geometry
 		void make(const vec3& size, bool skybox = false);
 
-		void render(const mat4& proj, const mat4& view) {
+		void render() {
 			bind_vao(array);
 			glEnableVertexAttribArray(0);
 			glEnableVertexAttribArray(1);
@@ -49,11 +49,7 @@ namespace geo {
 
 		void make();
 
-		void render(Material* material, const mat4& proj, const mat4& view) {
-			material->use();
-			material->uniform("projection", proj);
-			material->uniform("view", view);
-			material->uniform("model", transform);
+		void render() {
 			bind_vao(array);
 			glEnableVertexAttribArray(0);
 			glEnableVertexAttribArray(1);

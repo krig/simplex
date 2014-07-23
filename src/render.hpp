@@ -120,18 +120,6 @@ struct Instance {
 };
 
 
-// should the camera just be an instance with a null mesh and material?
-struct Camera {
-	Frame frame;
-
-	// calculates viewmodel matrix relative
-	// to the root chunk
-	mat4 viewmodel(ChunkPos root) const {
-		return glm::translate(mat4(glm::transpose(frame.orientation())),
-		                      -frame.position(root));
-	}
-};
-
 struct Renderable {
 	Material* material;
 	Mesh* mesh;

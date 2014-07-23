@@ -13,30 +13,6 @@ namespace {
 	const int SCR_W = 960;
 	const int SCR_H = 480;
 
-
-	struct Camera {
-		Camera() : offset(0, 0, 0), angle(0) {
-		}
-
-		// position and orientation of camera
-		// relative to player
-		// an fps camera is offset from the player position
-		// and rotates with the player in the XZ direction
-		// it can then rotate in a limited range around its
-		// local Z axis
-		vec3 offset;
-		float angle; // look angle around X axis (radians)
-		vec3 bob; // view bob (while walking / running)
-
-		void pitch(float x) {
-			angle -= x;
-			if (angle > HALFPI)
-				angle = HALFPI;
-			if (angle < -HALFPI)
-				angle = -HALFPI;
-		}
-	};
-
 	mat4 fps_view(vec3 eye, float pitch, float yaw) {
 		float cosPitch = cosf(pitch);
 		float sinPitch = sinf(pitch);
@@ -56,13 +32,14 @@ namespace {
 	}
 
 	// calculate world -> view matrix
-	mat4 make_view_matrix(const Player& player, const Camera& camera) {
-		return fps_view(player.pos + camera.offset + camera.bob, camera.angle, player.angle);
+	mat4 make_view_matrix(const Player& player) {
+		return fps_view(player.pos + player.offset + player.bob,
+		                player.pitch, player.yaw);
 	}
 
 	// calculate world -> view matrix with no translation
-	mat4 make_sky_view_matrix(const Player& player, const Camera& camera) {
-		return fps_view(vec3(0, 0, 0), camera.angle, player.angle);
+	mat4 make_sky_view_matrix(const Player& player) {
+		return fps_view(vec3(0, 0, 0), player.pitch, player.yaw);
 	}
 
 	struct Game {
@@ -87,9 +64,8 @@ namespace {
 			load_shaders();
 
 			player.pos = vec3(0.f, 0.f, 5.f);
-			player.angle = 0.f;
-			camera.offset = vec3(0.f, 1.85f, 0.f);
-			camera.angle = 0.f;
+			player.offset = vec3(0.f, 1.85f, 0.f);
+			player.pitch = player.yaw = 0.f;
 
 			world.init(util::randint());
 		}
@@ -160,7 +136,7 @@ namespace {
 		}
 
 		void handle_input(double dt) {
-			float speed = 6.f * dt;
+			float speed = 2.f;
 
 			const Uint8* state = SDL_GetKeyboardState(NULL);
 			if (state[SDL_SCANCODE_A])
@@ -171,9 +147,11 @@ namespace {
 				player.move(vec3(0.f, 0.f, -speed));
 			if (state[SDL_SCANCODE_S])
 				player.move(vec3(0.f, 0.f, speed));
+			if (state[SDL_SCANCODE_SPACE])
+				player.jump();
 
 			if (state[SDL_SCANCODE_W] || state[SDL_SCANCODE_S]) {
-				camera.bob += vec3(sinf(bobd.x) * 0.003f, cosf(bobd.y) * 0.006f, 0.f);
+				player.bob += vec3(sinf(bobd.x) * 0.003f, cosf(bobd.y) * 0.006f, 0.f);
 				bobd.x += speed * 1.6f;
 				bobd.y += speed * 1.8f;
 			} else {
@@ -188,10 +166,7 @@ namespace {
 				float xsens = 1.f / TWOPI;
 				float ysens = 1.f / TWOPI;
 
-				if (mouse_dx != 0)
-					player.rotate(mouse_dx * dt * xsens);
-				if (mouse_dy != 0)
-					camera.pitch(mouse_dy * dt * ysens);
+				player.look(mouse_dx * dt * xsens, mouse_dy * dt * ysens);
 			} else if (SDL_GetMouseState(0, 0) & SDL_BUTTON(SDL_BUTTON_LEFT)) {
 				mouse_captured = true;
 				SDL_SetRelativeMouseMode(SDL_TRUE);
@@ -206,7 +181,7 @@ namespace {
 			update_daycycle(dt);
 			update_chunks(dt);
 			update_ecosystem(dt);
-			update_player(dt);
+			player.tick(dt);
 			update_creatures(dt);
 		}
 
@@ -215,8 +190,6 @@ namespace {
 		void update_chunks(double dt) {
 		}
 		void update_ecosystem(double dt) {
-		}
-		void update_player(double dt) {
 		}
 		void update_creatures(double dt) {
 		}
@@ -229,13 +202,13 @@ namespace {
 
 			glPolygonMode(GL_FRONT, wireframe_mode ? GL_LINE : GL_FILL);
 
-			modelview.load(make_view_matrix(player, camera));
+			modelview.load(make_view_matrix(player));
 
 			render_sky();
 
 			glClear(GL_DEPTH_BUFFER_BIT);
 
-			//render_groundplane();
+			render_groundplane();
 
 			world.render();
 
@@ -278,7 +251,15 @@ namespace {
 		}
 
 		void render_groundplane() {
-			plane.render(material_basic, projection.get(), modelview.get());
+			modelview.push();
+			Material* material = material_basic;
+			cube_tex->bind(0);
+			material->use();
+			material->uniform("tex0", 0);
+			material->uniform("MVP", projection.get() * modelview.get());
+			material->uniform("normal_matrix", mat3());
+			plane.render();
+			modelview.pop();
 		}
 
 		void render_cubes() {
@@ -294,7 +275,7 @@ namespace {
 				modelview *= cube.transform;
 				material->uniform("MVP", projection.get() * modelview.get());
 				material->uniform("normal_matrix", mat3(cube.transform));
-				cube.render(projection.get(), modelview.get());
+				cube.render();
 				modelview.pop();
 			}
 		}
@@ -304,16 +285,19 @@ namespace {
 		}
 
 		void render_sky() {
-			mat4 skyview = make_sky_view_matrix(player, camera);
+			mat4 skyview = make_sky_view_matrix(player);
 
 			Material* material = material_sky;
 			material->use();
 			material->uniform("projection", projection.get());
 			material->uniform("view", skyview);
 			material->uniform("model", sky.transform);
-			material->uniform("sky_dark", vec3(0.3f, 0.333f, 0.4f));
+			if (player.inair)
+				material->uniform("sky_dark", vec3(0.3f, 0.333f, 0.4f));
+			else
+				material->uniform("sky_dark", vec3(0, 0, 0));
 			material->uniform("sky_light", vec3(0.86f, 0.8f, 0.91f));
-			sky.render(projection.get(), skyview);
+			sky.render();
 		}
 
 		Window screen;
@@ -324,7 +308,7 @@ namespace {
 		MatrixStack<32> modelview;
 
 		Player player;
-		Camera camera;
+
 		World world;
 
 		Texture2D* cube_tex;
