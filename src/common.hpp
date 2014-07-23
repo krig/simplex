@@ -56,6 +56,7 @@ namespace util {
 constexpr double PI = M_PI;
 constexpr double TWOPI = PI * 2.0;
 constexpr double HALFPI = PI * 0.5;
+constexpr double TAU = 1.618033988749895; // golden ratio
 
 inline float deg2rad(float deg) {
 	return (deg / 360.f) * TWOPI;

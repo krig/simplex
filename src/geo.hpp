@@ -13,7 +13,16 @@ namespace geo {
 	// something which holds a VAO and information
 	// about how to render it with a given material
 
-	
+	// icosahedron:
+	// (0, +-1, +-tau)
+	// (+-1, +-tau, 0)
+	// (+-tau, 0, +-1)
+
+	// dodecahedron
+	// (+-1, +-1, +-1)
+	// (0, +-1/tau, +-tau)
+	// (+-1/tau, +-tau, 0)
+	// (+-tau, 0, +-1/tau)
 
 	struct cube_vert {
 		vec3 pos;
