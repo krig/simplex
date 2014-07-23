@@ -62,6 +62,11 @@ inline float deg2rad(float deg) {
 	return (deg / 360.f) * TWOPI;
 }
 
+template <typename I>
+inline void delete_all(I begin, I end) {
+	for (I i = begin; i != end; ++i)
+		delete *i;
+}
 
 #include "strfmt.hpp"
 #include "logging.hpp"

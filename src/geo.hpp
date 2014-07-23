@@ -31,27 +31,25 @@ namespace geo {
 	};
 
 	struct cube {
-		cube() : array(0), buffer(0), transform() {
+		cube() {
 		}
 
 		// create the cube geometry
 		void make(const vec3& size, bool skybox = false);
 
 		void render() {
-			bind_vao(array);
-			glEnableVertexAttribArray(0);
-			glEnableVertexAttribArray(1);
-			glEnableVertexAttribArray(2);
+			array.bind();
 			glDrawArrays(GL_TRIANGLES, 0, 6 * 2 * 3);
-
+			array.unbind();
 		}
 
-		GLuint array, buffer;
+		VAO array;
+		VBO buffer;
 		mat4 transform;
 	};
 
 	struct plane {
-		plane() : array(0), buffer(0), transform() {
+		plane() {
 			segment_size = 3.f;
 			segments = 100;
 		}
@@ -59,17 +57,15 @@ namespace geo {
 		void make();
 
 		void render() {
-			bind_vao(array);
-			glEnableVertexAttribArray(0);
-			glEnableVertexAttribArray(1);
-			glEnableVertexAttribArray(2);
+			array.bind();
 			glDrawArrays(GL_TRIANGLES, 0, segments * segments * 6);
-
+			array.unbind();
 		}
 
 		float segment_size;
 		int segments;
-		GLuint array, buffer;
+		VAO array;
+		VBO buffer;
 		mat4 transform;
 	};
 

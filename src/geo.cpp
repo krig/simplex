@@ -85,13 +85,16 @@ namespace geo {
 	}
 
 	void cube::make(const vec3& size, bool skybox) {
-		array = make_vao();
-		bind_vao(array);
-		buffer = make_buffer(GL_ARRAY_BUFFER, make_cube_vertices(size, skybox));
-		glVertexAttribPointer(0u, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), 0);
-		glVertexAttribPointer(1u, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (const void*)(3*sizeof(float)));
-		glVertexAttribPointer(2u, 2, GL_FLOAT, GL_TRUE, 8*sizeof(float), (const void*)(6*sizeof(float)));
-		glVertexAttrib3f(3u, 1.f, 1.f, 1.f);
+		array.gen();
+		array.bind();
+		buffer.gen();
+		buffer.bind(GL_ARRAY_BUFFER);
+		buffer.data(GL_ARRAY_BUFFER, make_cube_vertices(size, skybox));
+		array.pointer(0, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), 0);
+		array.pointer(1, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (const void*)(3*sizeof(float)));
+		array.pointer(2, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (const void*)(6*sizeof(float)));
+		array.attrib(3, vec3(1.f, 1.f, 1.f));
+		array.unbind();
 	}
 
 
@@ -114,13 +117,15 @@ namespace geo {
 			}
 		}
 
-
-		array = make_vao();
-		bind_vao(array);
-		buffer = make_buffer(GL_ARRAY_BUFFER, verts);
-		glVertexAttribPointer(0u, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), 0);
-		glVertexAttribPointer(1u, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (const void*)(3*sizeof(float)));
-		glVertexAttribPointer(2u, 2, GL_FLOAT, GL_TRUE, 8*sizeof(float), (const void*)(6*sizeof(float)));
+		array.gen();
+		array.bind();
+		buffer.gen();
+		buffer.bind(GL_ARRAY_BUFFER);
+		buffer.data(GL_ARRAY_BUFFER, verts);
+		array.pointer(0, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), 0);
+		array.pointer(1, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (const void*)(3*sizeof(float)));
+		array.pointer(2, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (const void*)(6*sizeof(float)));
+		array.unbind();
 	}
 
 }

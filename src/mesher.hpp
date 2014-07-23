@@ -1,18 +1,10 @@
 #pragma once
 
 // API similar to the OpenGL immediate mode,
-// outputs a VBO
+// outputs a VBO:
+// All the vertex data is kept in a single array
+// of floats.
 class Mesher {
-	enum class Type {
-		None,
-		Float,
-		UnsignedByte,
-		SignedByte,
-		UnsignedShort,
-		SignedShort,
-		UnsignedInt,
-		SignedInt
-	};
 	enum class Use {
 		Unused,
 		Vertex,
@@ -31,8 +23,8 @@ class Mesher {
 		_mode = mode;
 	}
 
-	Mesh* end() {
-		return nullptr;
+	// flush and write output to VBO
+	void write(VBO& vbo) {
 	}
 
 	Mesher& vertex(float x, float y, float z) {
@@ -55,7 +47,6 @@ class Mesher {
 	Format _format[32];
 	std::vector<float> _current;
 	std::vector<float> _array;
-	std::vector<uint32_t> _indices;
 };
 
 /*

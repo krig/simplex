@@ -31,30 +31,87 @@ struct Window {
 };
 
 
-inline GLuint make_vao() {
+struct VBO {
+	VBO() : id(0) {
+	}
+
+	~VBO() {
+		if (id > 0)
+			release();
+	}
+
+	void gen() {
+		glGenBuffers(1, &id);
+	}
+
+	void release() {
+		glDeleteBuffers(1, &id);
+		id = 0;
+	}
+
+	void bind(GLenum target) {
+		glBindBuffer(target, id);
+	}
+
+	void unbind(GLenum target) {
+		glBindBuffer(target, 0);
+	}
+
+	template <typename V>
+	void data(GLenum target, const V& v, GLenum usage = GL_STATIC_DRAW) {
+		glBufferData(target, v.size() * sizeof(v[0]), (const void*)v.data(), usage);
+	}
+
+	operator GLuint () const {
+		return id;
+	}
+
 	GLuint id;
-	glGenVertexArrays(1, &id);
-	return id;
-}
+};
 
-inline void bind_vao(GLuint vao) {
-	glBindVertexArray(vao);
-}
+struct VAO {
+	VAO() : id(0) {
+	}
 
-inline GLuint make_vbo() {
+	~VAO() {
+		if (id > 0)
+			release();
+	}
+
+	void gen() {
+		glGenVertexArrays(1, &id);
+	}
+
+	void release() {
+		glDeleteVertexArrays(1, &id);
+		id = 0;
+	}
+
+	void bind() {
+		glBindVertexArray(id);
+	}
+
+	void unbind() {
+		glBindVertexArray(0);
+	}
+
+	void pointer(GLuint index, GLint size,
+	             GLenum type, GLboolean normalized,
+	             GLsizei stride, const GLvoid* pointer) {
+		glVertexAttribPointer(index, size, type, normalized, stride, pointer);
+		glEnableVertexAttribArray(index);
+	}
+
+	void attrib(GLuint index, const vec3& v) {
+		glVertexAttrib3fv(index, glm::value_ptr(v));
+	}
+
+	operator GLuint () const {
+		return id;
+	}
+
 	GLuint id;
-	glGenBuffers(1, &id);
-	return id;
-}
-
-template <class V>
-GLuint make_buffer(GLenum target, const V& v, GLenum usage = GL_STATIC_DRAW) {
-	GLuint vbo;
-	glGenBuffers(1, &vbo);
-	glBindBuffer(target, vbo);
-	glBufferData(target, v.size() * sizeof(v[0]), (const void*)v.data(), usage);
-	return vbo;
-}
+};
 
 // defined in asset manager
 struct Mesh;
