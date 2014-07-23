@@ -33,8 +33,8 @@ struct Player {
 
 	void jump() {
 		if (onground && jumpcount <= 0.f) {
-			jumpcount = 1.f;
-			velocity.y += 6.f + 2.f * std::min(1.f, (float)abs(glm::length(velocity)));
+			jumpcount = 0.2f;
+			velocity.y += 8.f + 2.f * std::min(1.f, (float)abs(glm::length(velocity)));
 			onground = false;
 		}
 	}
@@ -49,9 +49,14 @@ struct Player {
 			pos.y = 0.f;
 			onground = true;
 		}
-		velocity.x *= 0.8f;
-		velocity.z *= 0.8f;
-		velocity.y -= 9.8f * 1.3f * dt;
+		if (onground) {
+			velocity.x *= 0.8f;
+			velocity.z *= 0.8f;
+		} else {
+			velocity.x *= 0.83f;
+			velocity.z *= 0.83f;
+		}
+		velocity.y -= 9.8f * 3.33f * dt;
 	}
 
 	vec3 velocity;

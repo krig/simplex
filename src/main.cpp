@@ -7,6 +7,7 @@
 #include "assets.hpp"
 #include "player.hpp"
 #include "matrixstack.hpp"
+#include "colors.hpp"
 
 namespace {
 	const double TARGET_FPS = 120.0;
@@ -292,8 +293,8 @@ namespace {
 			material->uniform("projection", projection.get());
 			material->uniform("view", skyview);
 			material->uniform("model", sky.transform);
-			material->uniform("sky_dark", vec3(0.3f + 0.7f*player.jumpcount, 0.333f, 0.4f));
-			material->uniform("sky_light", vec3(0.86f, 0.8f, 0.91f));
+			material->uniform("sky_dark", vec3(colors::tango::skyblue_3));
+			material->uniform("sky_light", vec3(colors::tango::skyblue_6));
 			sky.render();
 		}
 

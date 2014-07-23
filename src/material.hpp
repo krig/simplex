@@ -17,6 +17,11 @@ struct Material : public Asset {
 		glUniform3fv(index, 1, glm::value_ptr(v));
 	}
 
+	void uniform(const char* loc, const vec4& v) {
+		GLuint index = glGetUniformLocation(program, loc);
+		glUniform4fv(index, 1, glm::value_ptr(v));
+	}
+
 	void uniform(const char* loc, const mat3& m) {
 		GLuint index = glGetUniformLocation(program, loc);
 		glUniformMatrix3fv(index, 1, GL_FALSE, glm::value_ptr(m));
