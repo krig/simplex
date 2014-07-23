@@ -8,6 +8,8 @@ struct Player {
 		offset = vec3(0, 0, 0);
 		bob = vec3(0, 0, 0);
 		velocity = vec3(0, 0, 0);
+		jumpcount = 0.f;
+		onground = true;
 	}
 
 	void move(const glm::vec3& dir) {
@@ -30,19 +32,22 @@ struct Player {
 	}
 
 	void jump() {
-		if (!inair) {
-			inair = true;
-			velocity += vec3(0.f, 10.f, 0.f);
+		if (onground && jumpcount <= 0.f) {
+			jumpcount = 1.f;
+			velocity.y += 6.f + 2.f * std::min(1.f, (float)abs(glm::length(velocity)));
+			onground = false;
 		}
 	}
 
 	void tick(double dt) {
-		float MAX_VEL = 5.f;
+		jumpcount = std::max(0.f, jumpcount - (float)dt);
+		float MAX_VEL = 54.f; // terminal velocity
 		velocity = glm::clamp(velocity, -MAX_VEL, MAX_VEL);
 		pos += velocity * (float)dt;
 		if (pos.y < 0.f) {
-			inair = false;
+			velocity.y = 0.f;
 			pos.y = 0.f;
+			onground = true;
 		}
 		velocity.x *= 0.8f;
 		velocity.z *= 0.8f;
@@ -55,5 +60,6 @@ struct Player {
 	float pitch; // look angle around X axis (radians)
 	vec3 offset; // camera offset from player position
 	vec3 bob; // view bob (while walking / running)
-	bool inair;
+	float jumpcount;
+	bool onground;
 };
