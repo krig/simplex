@@ -97,7 +97,7 @@ namespace {
 		void load_shaders() {
 			material_basic = load_material("basic");
 			material_sky = load_material("sky");
-			cube_tex = load_texture("data/test64.png");
+			cube_tex = load_texture("data/test8.png");
 		}
 
 		void handle_event(SDL_Event* e) {
