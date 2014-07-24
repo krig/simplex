@@ -39,7 +39,7 @@ namespace aabb {
 	}
 
 	// create a bounding box from cloud of points
-	inline AABB create(const std::vector<vec3>& points) {
+	inline AABB create(const vector<vec3>& points) {
 		AABB ret;
 		ret.lo = vec3(FLT_MAX, FLT_MAX, FLT_MAX);
 		ret.hi = vec3(FLT_MIN, FLT_MIN, FLT_MIN);
@@ -74,7 +74,7 @@ namespace aabb {
 	// by Andrew Woo
 	// from Graphics Gems, Academic Press, 1990
 	// returns (hit, point)
-	inline std::pair<bool, vec3> raycast(const AABB& box, const Ray& ray) {
+	inline pair<bool, vec3> raycast(const AABB& box, const Ray& ray) {
 		enum { Left, Right, Middle };
 		bool inside = true;
 		uint8_t quadrant[3];
@@ -100,7 +100,7 @@ namespace aabb {
 
 		// Ray origin inside bounding box
 		if(inside)	{
-			return std::make_pair(true, ray.origin);
+			return make_pair(true, ray.origin);
 		}
 
 
@@ -121,19 +121,19 @@ namespace aabb {
 
 		// Check final candidate actually inside box
 		if (max_t[which_plane] < 0.)
-			return std::make_pair(false, ray.origin);
+			return make_pair(false, ray.origin);
 		vec3 coord;
 		for (int i = 0; i < 3; i++) {
 			if (which_plane != i) {
 				coord[i] = ray.origin[i] + max_t[which_plane] * ray.dir[i];
 				if (coord[i] < box.lo[i] || coord[i] > box.hi[i])
-					return std::make_pair(false, ray.origin);
+					return make_pair(false, ray.origin);
 			} else {
 				coord[i] = candidate_plane[i];
 			}
 		}
 		// ray hits box
-		return std::make_pair(true, coord);
+		return make_pair(true, coord);
 	}
 
 }

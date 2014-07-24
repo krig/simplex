@@ -45,8 +45,8 @@ class Mesher {
 
 	GLenum _mode;
 	Format _format[32];
-	std::vector<float> _current;
-	std::vector<float> _array;
+	vector<float> _current;
+	vector<float> _array;
 };
 
 /*

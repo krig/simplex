@@ -50,7 +50,6 @@ namespace {
 		}
 
 		~Game() {
-			delete_all(cubes.begin(), cubes.end());
 		}
 
 		void init() {
@@ -224,25 +223,26 @@ namespace {
 		}
 
 		void make_cubes() {
+			typedef unique_ptr<geo::cube> cube_ptr;
 			{
-				geo::cube *cube1 = new geo::cube;
+				cube_ptr cube1(new geo::cube);
 				cube1->make(vec3(0.5f, 0.5f, 0.5f));
 				cube1->transform = glm::translate(vec3(0.f, 0.5f, 0.f));
-				cubes.push_back(cube1);
+				cubes.push_back(move(cube1));
 			}
 
 			for (int i = -10; i < 10; ++i) {
-				geo::cube* cube1 = new geo::cube;
+				cube_ptr cube1(new geo::cube);
 				cube1->make(vec3(0.25f, 0.25f, 0.25f));
 				cube1->transform = glm::translate(vec3(1.f + i, 0.5f, 0.f));
-				cubes.push_back(cube1);
+				cubes.push_back(move(cube1));
 			}
 
 			for (int i = -10; i < 10; ++i) {
-				geo::cube* cube1 = new geo::cube;
+				cube_ptr cube1(new geo::cube);
 				cube1->make(vec3(0.25f, 0.25f, 0.25f));
 				cube1->transform = glm::translate(vec3(0.f, 0.5f, 1.f + i));
-				cubes.push_back(cube1);
+				cubes.push_back(move(cube1));
 			}
 
 			a = 0.f;
@@ -272,7 +272,7 @@ namespace {
 			material->use();
 			material->uniform("tex0", 0);
 
-			for (auto cube : cubes) {
+			for (const auto& cube : cubes) {
 				modelview.push();
 				modelview *= cube->transform;
 				material->uniform("MVP", projection.get() * modelview.get());
@@ -314,7 +314,7 @@ namespace {
 		Material* material_basic;
 		Material* material_sky;
 		geo::plane plane;
-		std::vector<geo::cube*> cubes;
+		vector<unique_ptr<geo::cube>> cubes;
 		geo::cube sky;
 		vec3 bobd;
 		float a, b, c;

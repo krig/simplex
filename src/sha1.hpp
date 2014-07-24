@@ -40,7 +40,7 @@ struct SHA1 {
             return _data32[idx];
         }
 
-        std::string hex() const {
+	    std::string hex() const {
             char ret[41];
             char* c = ret;
             for (uint32_t i = 0; i < SHA1_DIGEST_SIZE; i++) {

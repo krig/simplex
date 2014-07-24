@@ -173,14 +173,14 @@ struct Instance {
 	Frame frame;
 	Mesh* mesh;
 	Material* material;
-	std::vector<Texture2D*> textures;
+	vector<Texture2D*> textures;
 };
 
 
 struct Renderable {
 	Material* material;
 	Mesh* mesh;
-	std::array<Texture2D*, 16> textures;
+	array<Texture2D*, 16> textures;
 };
 
 //struct Instance {

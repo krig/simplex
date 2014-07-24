@@ -6,7 +6,7 @@
 namespace {
 	Notify notify;
 	Asset* assets = nullptr;
-	std::map<int, Asset*> wdmap;
+	dict<int, Asset*> wdmap;
 
 	GLenum sdl_format_to_gl(SDL_Surface* image) {
 		GLenum format;
@@ -118,7 +118,7 @@ struct Shader {
 		if (status == GL_FALSE) {
 			GLint length;
 			glGetShaderiv(name, GL_INFO_LOG_LENGTH, &length);
-			std::vector<GLchar> info(length);
+			vector<GLchar> info(length);
 			glGetShaderInfoLog(name, length, nullptr, info.data());
 			LOG_ERROR("glCompileShader failed: %s", info.data());
 		}
@@ -137,7 +137,7 @@ inline bool compile_program(GLuint program, GLuint shader1, GLuint shader2) {
 	if (status == GL_FALSE) {
 		GLint length;
 		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
-		std::vector<GLchar> info(length);
+		vector<GLchar> info(length);
 		glGetProgramInfoLog(program, length, nullptr, info.data());
 		LOG_ERROR("glLinkProgram failed: %s", info.data());
 	}

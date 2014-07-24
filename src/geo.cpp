@@ -4,7 +4,7 @@
 
 namespace geo {
 
-	std::vector<cube_vert> make_cube_vertices(const vec3& size, bool skybox) {
+	vector<cube_vert> make_cube_vertices(const vec3& size, bool skybox) {
 
 		vec3 corners[8] = {
 			{-1.f,-1.f,-1.f}, // bottom
@@ -21,7 +21,7 @@ namespace geo {
 		for (int i = 0; i < 8; ++i)
 			corners[i] *= size;
 
-		std::vector<cube_vert> verts = {
+		vector<cube_vert> verts = {
 			// bottom
 			{ corners[0], { 0.f, -1.f, 0.f }, { 0.f, 0.f } },
 			{ corners[1], { 0.f, -1.f, 0.f }, { 1.f, 0.f } },
@@ -73,8 +73,8 @@ namespace geo {
 
 		if (skybox) {
 			for (size_t i = 0; i < verts.size(); i += 3) {
-				std::swap(verts[i + 1].pos, verts[i + 2].pos);
-				std::swap(verts[i + 1].texcoord, verts[i + 2].texcoord);
+				swap(verts[i + 1].pos, verts[i + 2].pos);
+				swap(verts[i + 1].texcoord, verts[i + 2].texcoord);
 				verts[i].normal = -glm::normalize(verts[i].pos);
 				verts[i+1].normal = -glm::normalize(verts[i+1].pos);
 				verts[i+2].normal = -glm::normalize(verts[i+2].pos);
@@ -100,7 +100,7 @@ namespace geo {
 
 	void plane::make() {
 
-		std::vector<cube_vert> verts;
+		vector<cube_vert> verts;
 
 		for (int z = -segments/2; z < segments/2; ++z) {
 			for (int x = -segments/2; x < segments/2; ++x) {
