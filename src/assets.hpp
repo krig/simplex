@@ -9,7 +9,6 @@ struct Asset {
 	virtual ~Asset() {}
 	virtual void load() = 0;
 	string name;
-	Asset* next;
 };
 
 void update_assets();

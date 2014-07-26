@@ -5,7 +5,7 @@
 
 namespace {
 	Notify notify;
-	Asset* assets = nullptr;
+	vector<Asset*> assets;
 	dict<int, Asset*> wdmap;
 
 	GLenum sdl_format_to_gl(SDL_Surface* image) {
@@ -36,11 +36,8 @@ Assets::Assets() {
 }
 
 Assets::~Assets() {
-	while (assets != nullptr) {
-		Asset* a = assets;
-		assets = a->next;
-		delete a;
-	}
+	delete_all(assets.begin(), assets.end());
+	assets.clear();
 }
 
 void update_assets() {
@@ -94,8 +91,7 @@ Texture2D* load_texture(const char* name) {
 	Texture2D* t = new Texture2D;
 	t->name = name;
 	t->load();
-	t->next = assets;
-	assets = t;
+	assets.push_back(t);
 	wdmap[notify.add(name)] = t;
 	return t;
 }
@@ -182,8 +178,7 @@ Material* load_material(const char* name) {
 	nm->program = 0;
 	nm->name = name;
 	nm->load();
-	nm->next = assets;
-	assets = nm;
+	assets.push_back(nm);
 	util::strfmt<512> vsh_name("data/%s.vsh", name);
 	util::strfmt<512> fsh_name("data/%s.fsh", name);
 	wdmap[notify.add(vsh_name.c_str())] = nm;

@@ -1,6 +1,7 @@
 #pragma once
 
 // material -> shaders, texture, animated texture, multitexture
+// also information like solidity, translucency, step sound, break sound, break material...
 struct Material : public Asset {
 	// ...
 

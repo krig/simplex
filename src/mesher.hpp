@@ -14,12 +14,12 @@ class Mesher {
 	};
 
 	struct Format {
-		Type type;
 		Use use;
-		uint8_t length;
+		uint8_t sz; // element byte size
+		uint8_t len; // element length
 	};
 
-	Mesher& init(GLenum mode) {
+	Mesher& begin(GLenum mode) {
 		_mode = mode;
 	}
 
@@ -35,7 +35,7 @@ class Mesher {
 		return *this;
 	}
 
-	Mesher& color(float r, float g, float b) {
+	Mesher& color(uint32_t argb) {
 		return *this;
 	}
 
@@ -45,8 +45,8 @@ class Mesher {
 
 	GLenum _mode;
 	Format _format[32];
-	vector<float> _current;
-	vector<float> _array;
+	vector<uint8_t> _current;
+	vector<uint8_t> _array;
 };
 
 /*
@@ -57,4 +57,8 @@ class Mesher {
   .vertex(0, 0, 0)
   .vertex(0, 0, 0)
   .end();
+
+  Mesh* geo::make_cube();
+  make_instance(geo::make_cube(), fancy_material);
+  
  */

@@ -11,6 +11,42 @@ http://codeflow.org/entries/2010/dec/09/minecraft-like-rendering-experiments-in-
 ![](https://raw2.github.com/krig/simplex/master/data/screenshot.png)
 
 
+## worldgen studio
+
+goal: allow playing around with terrain generation in realtime without
+needing to build tons of ui for it.
+
+* define the whole terrain generation process in a script file. This
+  includes what the available biomes are, the functions that generate
+  heightmaps etc.
+
+* hotload the whole script including base seed and regenerate the
+  landscape
+
+* display heightmaps as 2d views, fly around in map, scroll wheel to
+  show different layers
+
+* goal 2: generate trees and other world structures
+
+* goal 3: generate water, rivers, waterfalls, erosion...
+
+
+# some rough ideas
+
+- civilizations: generate pockets of societies both over and
+  underground
+
+- dwarf cities
+- goblin caves
+- elven forest fortresses
+- human castles
+
+- have a much deeper underground with dangerous stuff like zombie
+  crypts and demon pits deep low, and civilizations in the middle
+
+- put dwarf cities in mountains
+
+
 # world format
 
 this is roughly the minecraft chunk format:

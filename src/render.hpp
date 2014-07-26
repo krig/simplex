@@ -14,7 +14,6 @@ struct SDL {
 
 	SDL();
 	~SDL();
-	void init();
 
 	bool _sdl;
 	bool _mix;
@@ -38,6 +37,10 @@ struct VBO {
 	~VBO() {
 		if (id > 0)
 			release();
+	}
+
+	bool ok() const {
+		return id > 0;
 	}
 
 	void gen() {
@@ -76,6 +79,10 @@ struct VAO {
 	~VAO() {
 		if (id > 0)
 			release();
+	}
+
+	bool ok() const {
+		return id > 0;
 	}
 
 	void gen() {
@@ -168,25 +175,13 @@ struct Frame {
 	}
 };
 
-// instance: mesh + material + transform
+// instance: mesh + material + frame
 struct Instance {
 	Frame frame;
 	Mesh* mesh;
 	Material* material;
 	vector<Texture2D*> textures;
 };
-
-
-struct Renderable {
-	Material* material;
-	Mesh* mesh;
-	array<Texture2D*, 16> textures;
-};
-
-//struct Instance {
-//	Renderable* renderable;
-//	SceneLocation location;
-//};
 
 // * in game, keep separate arrays for instances of different type
 // * sort arrays by shader first and texture second before rendering

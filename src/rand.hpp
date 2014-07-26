@@ -5,6 +5,7 @@ namespace util {
 	void randseed();
 	uint64_t randint();
 
+	typedef uint64_t seed_t;
 	typedef std::mt19937_64 random_generator;
 
 }

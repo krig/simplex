@@ -37,7 +37,7 @@ struct Chunk : public ChunkData {
 
     // height map of chunk, determines to which
 	// height rain/snow falls
-	int precipitation_map[CHUNK_AREA];
+	uint8_t precipitation_map[256];
 
 	bool is_modified;
 	bool has_entities;

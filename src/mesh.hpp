@@ -4,17 +4,40 @@ struct Mesh;
 
 // mesh -> vertex data
 // indexed element buffer
-struct Mesh {
-	GLuint vao;
+struct Mesh : public Asset {
+	void load() {
+		// no asset reloading
+	}
+
+	VAO object;
+	VBO vertices;
+	VBO indices;
 
 	GLenum mode;
+	GLenum index_type;
 	GLuint ntriangles;
 	GLuint nindices;
 
-	// glDrawArrays(mode, first, count)
-	// glDrawArraysInstanced(mode, first, count, primcount)
-	// glDrawElements(mode, count, type, indices)
-	// glDrawElementsInstanced(mode, count, type, indices, primcount)
+	void draw_instanced(uint32_t ninstances) {
+		object.bind();
+		if (indices.ok()) {
+			glDrawElementsInstanced(mode, nindices, index_type, 0, ninstances);
+		} else {
+			glDrawArraysInstanced(mode, 0, ntriangles, ninstances);
+		}
+		object.unbind();
+	}
+
+	void draw() {
+		object.bind();
+		if (indices.ok()) {
+			glDrawElements(mode, nindices, index_type, 0);
+		} else {
+			glDrawArrays(mode, 0, ntriangles);
+		}
+		object.unbind();
+	}
+
 	// glDrawRangeElements(mode, start, end, count, type, indices)
 	// gl_VertexID
 
@@ -32,3 +55,4 @@ struct Mesh {
 	// }
 };
 
+// Mesh* create_mesh(const char* name, Mesher* source);

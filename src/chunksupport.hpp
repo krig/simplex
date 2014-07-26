@@ -1,16 +1,17 @@
 #pragma once
+#include "glm/gtc/noise.hpp"
+#include "rand.hpp"
 
 // support tools for chunk generation (like noise functions and so on)
 
-/*
-  for(int i = 0; i < CHUNKMAX_X; i++)
-    for(int j = 0; j < CHUNKMAX_Y; j++)
-        for(int k = 0; k < CHUNKMAX_Z; k++)
-            if(isSolid(perlinNoise.get(chunkPosition.x + i,
-                                         chunkPosition.y + j,
-                                         chunkPosition.z + k))
-                thisChunk[i,j,k] = new Voxel(solid);
-            else
-                thisChunk[i,j,k] = new Voxel(air);
-*/
-
+// spatially localized hash function for chunks
+inline uint64_t chunk_hash(int x, int y, int z) {
+	uint64_t hash = 0;
+	for (size_t i = 0; i < 21; ++i) {
+		hash += (z & 1) + ((x & 1) << 1) + ((y & 1) << 2);
+		x >>= 1;
+		y >>= 1;
+		z >>= 1;
+	}
+	return hash;
+}
