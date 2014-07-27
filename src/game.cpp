@@ -8,6 +8,7 @@
 #include "colors.hpp"
 #include "player.hpp"
 #include "matrixstack.hpp"
+#include "worley.hpp"
 
 namespace {
 	float mix(float a, float b, float t) {
@@ -102,8 +103,13 @@ struct Game : public Scene {
 		material_basic = load_material("basic");
 		material_sky = load_material("sky");
 		//cube_tex = load_texture("data/test8.png");
-		cube_tex = gen_texture("cubetex", 16, 16, [](int x, int y) {
-				return mix(colors::dawnbringer::orange, colors::dawnbringer::gray, util::rand01());
+		cube_tex = gen_texture("cubetex", 32, 32, [](int x, int y) {
+				//float n = worley_noise(glm::dvec3((double)x / 64., (double)y / 64., 1.), 1, 3.);
+				double d[2];
+				double scale = 32. / 3.f;
+				worley_noise(glm::dvec3((double)x / scale, (double)y / scale, 1.), d, 2, 3.);
+				float n = d[1] - d[0];
+				return mix(colors::dawnbringer::black, colors::dawnbringer::beige, n);
 			});
 		double d = util::rand01();
 		float freq = 4.f;

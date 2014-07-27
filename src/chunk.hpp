@@ -26,6 +26,8 @@ struct Chunk {
 	SubChunk* subchunks[32];
 };
 
+struct World;
+
 struct WorldGenerator {
 	World* world;
 	util::random_generator rng;
