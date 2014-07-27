@@ -114,7 +114,7 @@ struct Game : public Scene {
 		double d = util::rand01();
 		float freq = 4.f;
 		float lacunarity = 2.f;
-		float side = 8.f;
+		float side = 32.f;
 		plane_tex = gen_texture("planetex", side, side, [=](int x, int y) {
 				float n = octave_perlin<2>(freq, lacunarity, side, (float)x / side, (float)y / side, d);
 				n = (n + 1.f) * 0.5f;
