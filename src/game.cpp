@@ -106,19 +106,19 @@ struct Game : public Scene {
 		cube_tex = gen_texture("cubetex", 32, 32, [](int x, int y) {
 				//float n = worley_noise(glm::dvec3((double)x / 64., (double)y / 64., 1.), 1, 3.);
 				double d[2];
-				double scale = 32. / 3.f;
-				worley_noise(glm::dvec3((double)x / scale, (double)y / scale, 1.), d, 2, 3.);
+				double scale = 32. / 4.f;
+				worley_noise(glm::dvec3((double)x / scale, (double)y / scale, 1.), d, 2, scale);
 				float n = d[1] - d[0];
-				return mix(colors::dawnbringer::black, colors::dawnbringer::beige, n);
+				return mix(colors::dawnbringer::black, Color(0xffffffff), n);
 			});
-		double d = util::rand01();
-		float freq = 4.f;
+		double d = 10000. * util::rand01();
+		float freq = 16.f;
 		float lacunarity = 2.f;
 		float side = 32.f;
 		plane_tex = gen_texture("planetex", side, side, [=](int x, int y) {
-				float n = octave_perlin<2>(freq, lacunarity, side, (float)x / side, (float)y / side, d);
+				float n = octave_perlin<3>(freq, lacunarity, side, (float)x / side, (float)y / side, d);
 				n = (n + 1.f) * 0.5f;
-				return mix(colors::dawnbringer::black, colors::dawnbringer::dark_green, n);
+				return mix(Color(0xff144504), colors::dawnbringer::dark_green, n);
 			});
 	}
 

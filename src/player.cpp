@@ -33,8 +33,10 @@ Player::Player() {
 }
 
 void Player::move(const glm::vec3& dir) {
-    mat4 ori = glm::rotate(mat4(), yaw, vec3(0.f, 1.f, 0.f));
-    velocity += vec3(ori * vec4(dir, 1.f));
+	if (onground) {
+		mat4 ori = glm::rotate(mat4(), yaw, vec3(0.f, 1.f, 0.f));
+		velocity += vec3(ori * vec4(dir, 1.f));
+	}
 }
 
 void Player::look(float by, float x) {
@@ -73,8 +75,8 @@ void Player::update(double dt) {
         velocity.x *= 0.8f;
         velocity.z *= 0.8f;
     } else {
-	    velocity.x *= 0.83f;
-        velocity.z *= 0.83f;
+	    //velocity.x *= 0.83f;
+	    //velocity.z *= 0.83f;
     }
     velocity.y -= 9.8f * 3.33f * dt;
 }
