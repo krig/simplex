@@ -46,7 +46,6 @@ namespace {
 	}
 }
 
-
 int main(int argc, char* argv[]) {
 	try {
 		util::randseed();
@@ -54,6 +53,7 @@ int main(int argc, char* argv[]) {
 		Window screen;
 		Assets assets;
 		screen.create("game", SCR_W, SCR_H, SCR_W, SCR_H);
+
 		unique_ptr<Scene> game(make_game(screen));
 		mainloop(game.get());
 	}

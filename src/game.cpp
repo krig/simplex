@@ -9,6 +9,50 @@
 #include "player.hpp"
 #include "matrixstack.hpp"
 
+namespace {
+	float mix(float a, float b, float t) {
+		return (1.f - t) * a + t * b;
+	}
+	Color mix(Color a, Color b, float t) {
+		return Color(mix(a.x, b.x, t),
+		             mix(a.y, b.y, t),
+		             mix(a.z, b.z, t),
+		             mix(a.w, b.w, t));
+	}
+
+	float fade(float a, float b, float t) {
+		return t * t * t * (t * (t * 6 - 15.f) + 10.f);
+	}
+
+	float clamp(float v, float l = 0.f, float h = 1.f) {
+		return v > h ? h : v < l ? l : v;
+	}
+
+	template <size_t NOctaves>
+	float octave_simplex(float freq, float lacunarity, float x, float y, float t) {
+		float v = 0.f;
+		float amp = 0.5f;
+		for (size_t i = 0; i < NOctaves; ++i) {
+			v += amp * glm::simplex(vec3(x * freq, y * freq, t));
+			freq *= lacunarity;
+			amp /= lacunarity;
+		}
+		return v;
+	}
+
+	template <size_t NOctaves>
+	float octave_perlin(float freq, float lacunarity, float period, float x, float y, float t) {
+		float v = 0.f;
+		float amp = 0.5f;
+		for (size_t i = 0; i < NOctaves; ++i) {
+			v += amp * glm::perlin(vec2(x * freq, y * freq), vec2(freq, freq));
+			freq *= lacunarity;
+			amp /= lacunarity;
+		}
+		return v;
+	}
+}
+
 struct Game : public Scene {
 	Game(Window& screen) : Scene(), screen(screen) {
 		wireframe_mode = false;
@@ -57,7 +101,19 @@ struct Game : public Scene {
 	void load_shaders() {
 		material_basic = load_material("basic");
 		material_sky = load_material("sky");
-		cube_tex = load_texture("data/test8.png");
+		//cube_tex = load_texture("data/test8.png");
+		cube_tex = gen_texture("cubetex", 16, 16, [](int x, int y) {
+				return mix(colors::dawnbringer::orange, colors::dawnbringer::gray, util::rand01());
+			});
+		double d = util::rand01();
+		float freq = 4.f;
+		float lacunarity = 2.f;
+		float side = 8.f;
+		plane_tex = gen_texture("planetex", side, side, [=](int x, int y) {
+				float n = octave_perlin<2>(freq, lacunarity, side, (float)x / side, (float)y / side, d);
+				n = (n + 1.f) * 0.5f;
+				return mix(colors::dawnbringer::black, colors::dawnbringer::dark_green, n);
+			});
 	}
 
 	void handle_event(SDL_Event* e) {
@@ -213,7 +269,7 @@ struct Game : public Scene {
 	void render_groundplane() {
 		modelview.push();
 		Material* material = material_basic;
-		cube_tex->bind(0);
+		plane_tex->bind(0);
 		material->use();
 		material->uniform("tex0", 0);
 		material->uniform("MVP", projection.get() * modelview.get());
@@ -267,6 +323,7 @@ struct Game : public Scene {
 	Player player;
 
 	Texture2D* cube_tex;
+	Texture2D* plane_tex;
 	Material* material_basic;
 	Material* material_sky;
 	geo::plane plane;

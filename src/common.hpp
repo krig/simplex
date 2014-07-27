@@ -19,6 +19,7 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 #include "glm/gtx/transform.hpp"
+#include "glm/gtc/noise.hpp"
 
 // pull some commonly used stuff into our namespace
 using std::string;

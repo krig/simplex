@@ -23,6 +23,10 @@ struct Color : public vec4 {
 	Color(float R, float G, float B, float A = 1.f) : vec4(R, G, B, A) {
 	}
 
+	uint32_t rgba8() const {
+		return ((uint32_t)(a * 255.f) << 24) | ((uint32_t)(b * 255.f) << 16) | ((uint32_t)(g * 255.f) << 8) | (uint32_t)(r * 255.f);
+	}
+
 };
 
 namespace colors {

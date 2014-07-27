@@ -1,6 +1,7 @@
 #include "common.hpp"
 #include "render.hpp"
 #include "geo.hpp"
+#include "mesher.hpp"
 
 namespace geo {
 

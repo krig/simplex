@@ -96,6 +96,29 @@ Texture2D* load_texture(const char* name) {
 	return t;
 }
 
+Texture2D* gen_texture2(const char* name, int w, int h, ColorFiller* filler) {
+	Texture2D* t = new Texture2D;
+	t->name = name;
+
+	glGenTextures( 1, &t->id);
+	glBindTexture(GL_TEXTURE_2D, t->id);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    t->w = w;
+    t->h = h;
+    vector<uint32_t> pixels(w*h, 0xffffffff);
+    for (int iy = 0; iy < h; ++iy)
+	    for (int ix = 0; ix < w; ++ix)
+		    pixels[iy*w + ix] = (*filler)(ix, iy).rgba8();
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h,
+                 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
+	assets.push_back(t);
+	return t;
+}
+
+
 namespace {
 struct Shader {
 	Shader(GLenum type) {

@@ -73,7 +73,7 @@ void Player::update(double dt) {
         velocity.x *= 0.8f;
         velocity.z *= 0.8f;
     } else {
-        velocity.x *= 0.83f;
+	    velocity.x *= 0.83f;
         velocity.z *= 0.83f;
     }
     velocity.y -= 9.8f * 3.33f * dt;

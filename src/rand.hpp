@@ -5,6 +5,10 @@ namespace util {
 	void randseed();
 	uint64_t randint();
 
+	inline double rand01() {
+		return (double)(randint() % UINT32_MAX) / (double)UINT32_MAX;
+	}
+
 	typedef uint64_t seed_t;
 	typedef std::mt19937_64 random_generator;
 
