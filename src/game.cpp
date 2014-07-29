@@ -9,6 +9,7 @@
 #include "player.hpp"
 #include "matrixstack.hpp"
 #include "worley.hpp"
+#include "ui.hpp"
 
 namespace {
 	float mix(float a, float b, float t) {
@@ -72,6 +73,7 @@ struct Game : public Scene {
 
 		init_gl();
 		load_shaders();
+		ui.init();
 
 		player.pos = vec3(0.f, 0.f, 5.f);
 		player.offset = vec3(0.f, 1.85f, 0.f);
@@ -87,7 +89,7 @@ struct Game : public Scene {
 		glCullFace(GL_BACK);
 		glEnable(GL_TEXTURE_2D);
 		glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-		glClearColor(0.f, 0.f, 0.f, 0.f);
+		glClearColor(0.f, 0.f, 0.f, 1.f);
 		glClearDepth(1.f);
 
 		make_sky();
@@ -219,11 +221,11 @@ struct Game : public Scene {
 
 	void render() {
 		SDL_Point sz = screen.get_size();
-		glClearColor(0.2f, 0.2f, 0.2f, 0.0f);
+		glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 		glClearDepth(1.f);
 		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
-		glPolygonMode(GL_FRONT, wireframe_mode ? GL_LINE : GL_FILL);
+		glPolygonMode(GL_FRONT_AND_BACK, wireframe_mode ? GL_LINE : GL_FILL);
 
 		modelview.load(player.make_view_matrix());
 
@@ -235,10 +237,27 @@ struct Game : public Scene {
 
 		render_cubes();
 
+		ui.begin(sz);
+
+		vec2 mid(sz.x/2, sz.y/2);
+
+		ui.rect(vec2(mid.x  - 50.f, 16.f), vec2(mid.x + 50.f, 32.f),
+		        colors::flatui::orange, true);
+
+		ui.line(mid - vec2(0, 16.f), mid + vec2(0, 16.f), colors::flatui::asbestos);
+		ui.line(mid - vec2(16.f, 0), mid + vec2(16.f, 0), colors::flatui::asbestos);
+		ui.end();
+
 		screen.present();
 
 		if (mouse_captured) {
 			SDL_WarpMouseInWindow(screen.window, sz.x >> 1, sz.y >> 1);
+		}
+
+		GLenum err = glGetError();
+		while (err != GL_NO_ERROR) {
+			LOG_ERROR("GL error: %d", err);
+			err = glGetError();
 		}
 	}
 
@@ -320,6 +339,8 @@ struct Game : public Scene {
 	}
 
 	Window& screen;
+
+	UiStack ui;
 
 	bool mouse_captured;
 

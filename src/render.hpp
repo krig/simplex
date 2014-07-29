@@ -52,11 +52,11 @@ struct VBO {
 		id = 0;
 	}
 
-	void bind(GLenum target) {
+	void bind(GLenum target = GL_ARRAY_BUFFER) {
 		glBindBuffer(target, id);
 	}
 
-	void unbind(GLenum target) {
+	void unbind(GLenum target = GL_ARRAY_BUFFER) {
 		glBindBuffer(target, 0);
 	}
 

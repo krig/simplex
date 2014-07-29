@@ -43,6 +43,4 @@ namespace audio {
 
 		Mix_Music* _music;
 	};
-
-
 }

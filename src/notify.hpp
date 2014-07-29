@@ -32,9 +32,12 @@ struct Notify {
 	}
 
 	int add(const char* pathname, uint32_t mask = IN_CREATE | IN_DELETE | IN_CLOSE_WRITE) {
+		if (_watches.find(pathname) != _watches.end())
+			return _watches[pathname];
 		int wd = inotify_add_watch(_fd, pathname, mask);
 		if (wd == -1)
 			throw error("inotify_add_watch: %s", strerror(errno));
+		_watches[pathname] = wd;
 		return wd;
 	}
 
@@ -77,4 +80,5 @@ private:
 		char _buf[BUF_SIZE];
 		inotify_event _eventobj;
 	};
+	dict<string, int> _watches;
 };

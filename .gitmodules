@@ -7,3 +7,6 @@
 [submodule "lib/stb"]
 	path = lib/stb
 	url = git@github.com:nothings/stb
+[submodule "lib/cpptoml"]
+	path = lib/cpptoml
+	url = git@github.com:skystrife/cpptoml.git

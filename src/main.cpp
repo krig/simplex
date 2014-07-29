@@ -51,8 +51,8 @@ int main(int argc, char* argv[]) {
 		util::randseed();
 		SDL sdl;
 		Window screen;
-		Assets assets;
 		screen.create("game", SCR_W, SCR_H, SCR_W, SCR_H);
+		Assets assets;
 
 		unique_ptr<Scene> game(make_game(screen));
 		mainloop(game.get());

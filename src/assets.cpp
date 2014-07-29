@@ -2,10 +2,11 @@
 #include "render.hpp"
 #include "assets.hpp"
 #include "notify.hpp"
+#include "cpptoml.h"
 
 namespace {
 	Notify notify;
-	vector<Asset*> assets;
+	dict<string, Asset*> assets;
 	dict<int, Asset*> wdmap;
 
 	GLenum sdl_format_to_gl(SDL_Surface* image) {
@@ -30,14 +31,45 @@ namespace {
 			e->second->load();
 		}
 	}
+
+	void add_notification(const char* file, Asset* asset) {
+		wdmap[notify.add(file)] = asset;
+	}
+
+	void init_materials() {
+		auto materials = cpptoml::parse_file("data/materials.conf");
+		for (const auto& cfg : materials) {
+			unique_ptr<Material> nm(new Material);
+			nm->program = 0;
+			nm->name = cfg.first;
+			auto gp = materials.get_group(cfg.first);
+			if (!gp)
+				throw error("expected material definition: %s", nm->name.c_str());
+			string* v = gp->get_as<string>("vertex");
+			string* f = gp->get_as<string>("fragment");
+			if (v == 0 || f == 0)
+				throw error("material is missing vertex/fragment shader: %s", nm->name.c_str());
+			nm->vshader = "data/";
+			nm->vshader += *v;
+			nm->fshader = "data/";
+			nm->fshader += *f;
+			nm->load();
+			add_notification(nm->vshader.c_str(), nm.get());
+			add_notification(nm->fshader.c_str(), nm.get());
+			assets[nm->name] = nm.release();
+		}
+	}
 }
 
 Assets::Assets() {
+	init_materials();
 }
 
 Assets::~Assets() {
-	delete_all(assets.begin(), assets.end());
+	for (auto& e : assets)
+		delete e.second;
 	assets.clear();
+	wdmap.clear();
 }
 
 void update_assets() {
@@ -88,19 +120,28 @@ void Texture2D::load() {
 }
 
 Texture2D* load_texture(const char* name) {
+	auto ti = assets.find(name);
+	if (ti != assets.end())
+		return (Texture2D*)(ti->second);
 	Texture2D* t = new Texture2D;
 	t->name = name;
 	t->load();
-	assets.push_back(t);
-	wdmap[notify.add(name)] = t;
+	assets[name] = t;
+	add_notification(name, t);
 	return t;
 }
 
 Texture2D* gen_texture2(const char* name, int w, int h, ColorFiller* filler) {
-	Texture2D* t = new Texture2D;
-	t->name = name;
+	auto ti = assets.find(name);
+	Texture2D* t = 0;
+	if (ti == assets.end()) {
+		t = new Texture2D;
+		t->name = name;
+		glGenTextures( 1, &t->id);
+	} else {
+		t = (Texture2D*)(ti->second);
+	}
 
-	glGenTextures( 1, &t->id);
 	glBindTexture(GL_TEXTURE_2D, t->id);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -114,81 +155,79 @@ Texture2D* gen_texture2(const char* name, int w, int h, ColorFiller* filler) {
 		    pixels[iy*w + ix] = (*filler)(ix, iy).rgba8();
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h,
                  0, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
-	assets.push_back(t);
+	assets[name] = t;
 	return t;
 }
 
 
 namespace {
-struct Shader {
-	Shader(GLenum type) {
-		name = glCreateShader(type);
-	}
+	struct Shader {
+		Shader(GLenum type) {
+			name = glCreateShader(type);
+		}
 
-	~Shader() {
-		glDeleteShader(name);
-	}
+		~Shader() {
+			glDeleteShader(name);
+		}
 
-	bool compile(const char* source) {
-		glShaderSource(name, 1, &source, nullptr);
-		glCompileShader(name);
+		bool compile(const char* source) {
+			glShaderSource(name, 1, &source, nullptr);
+			glCompileShader(name);
+			GLint status;
+			glGetShaderiv(name, GL_COMPILE_STATUS, &status);
+			if (status == GL_FALSE) {
+				GLint length;
+				glGetShaderiv(name, GL_INFO_LOG_LENGTH, &length);
+				vector<GLchar> info(length);
+				glGetShaderInfoLog(name, length, nullptr, info.data());
+				LOG_ERROR("glCompileShader failed: %s", info.data());
+			}
+			return status != GL_FALSE;
+		}
+
+		GLuint name;
+	};
+
+	inline bool compile_program(GLuint program, GLuint shader1, GLuint shader2) {
+		glAttachShader(program, shader1);
+		glAttachShader(program, shader2);
+		glLinkProgram(program);
 		GLint status;
-		glGetShaderiv(name, GL_COMPILE_STATUS, &status);
+		glGetProgramiv(program, GL_LINK_STATUS, &status);
 		if (status == GL_FALSE) {
 			GLint length;
-			glGetShaderiv(name, GL_INFO_LOG_LENGTH, &length);
+			glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
 			vector<GLchar> info(length);
-			glGetShaderInfoLog(name, length, nullptr, info.data());
-			LOG_ERROR("glCompileShader failed: %s", info.data());
+			glGetProgramInfoLog(program, length, nullptr, info.data());
+			LOG_ERROR("glLinkProgram failed: %s", info.data());
 		}
+		glDetachShader(program, shader1);
+		glDetachShader(program, shader2);
 		return status != GL_FALSE;
 	}
 
-	GLuint name;
-};
 
-inline bool compile_program(GLuint program, GLuint shader1, GLuint shader2) {
-	glAttachShader(program, shader1);
-	glAttachShader(program, shader2);
-	glLinkProgram(program);
-	GLint status;
-	glGetProgramiv(program, GL_LINK_STATUS, &status);
-	if (status == GL_FALSE) {
-		GLint length;
-		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
-		vector<GLchar> info(length);
-		glGetProgramInfoLog(program, length, nullptr, info.data());
-		LOG_ERROR("glLinkProgram failed: %s", info.data());
+	inline GLuint load_program(const char* vertex_shader, const char* fragment_shader) {
+		Shader v(GL_VERTEX_SHADER);
+		Shader f(GL_FRAGMENT_SHADER);
+		string vsh = util::read_file(vertex_shader);
+		string fsh = util::read_file(fragment_shader);
+		if (!v.compile(vsh.c_str()))
+			return 0;
+		if (!f.compile(fsh.c_str()))
+			return 0;
+		GLuint program = glCreateProgram();
+		if (!compile_program(program, v.name, f.name)) {
+			LOG_ERROR("Failed to compile v='%s', f='%s'", vertex_shader, fragment_shader);
+			return 0;
+		}
+		return program;
 	}
-	glDetachShader(program, shader1);
-	glDetachShader(program, shader2);
-	return status != GL_FALSE;
-}
-
-
-inline GLuint load_program(const char* vertex_shader, const char* fragment_shader) {
-	Shader v(GL_VERTEX_SHADER);
-	Shader f(GL_FRAGMENT_SHADER);
-	string vsh = util::read_file(vertex_shader);
-	string fsh = util::read_file(fragment_shader);
-	if (!v.compile(vsh.c_str()))
-		return 0;
-	if (!f.compile(fsh.c_str()))
-		return 0;
-	GLuint program = glCreateProgram();
-	if (!compile_program(program, v.name, f.name)) {
-		LOG_ERROR("Failed to compile v='%s', f='%s'", vertex_shader, fragment_shader);
-		return 0;
-	}
-	return program;
-}
 
 }
 
 void Material::load() {
-	util::strfmt<512> vsh_name("data/%s.vsh", name.c_str());
-	util::strfmt<512> fsh_name("data/%s.fsh", name.c_str());
-	GLuint newprogram = load_program(vsh_name.c_str(), fsh_name.c_str());
+	GLuint newprogram = load_program(vshader.c_str(), fshader.c_str());
 	if (newprogram == 0)
 		throw error("Failed to load program %s", name.c_str());
 	if (program != 0)
@@ -197,14 +236,8 @@ void Material::load() {
 }
 
 Material* load_material(const char* name) {
-	Material* nm = new Material;
-	nm->program = 0;
-	nm->name = name;
-	nm->load();
-	assets.push_back(nm);
-	util::strfmt<512> vsh_name("data/%s.vsh", name);
-	util::strfmt<512> fsh_name("data/%s.fsh", name);
-	wdmap[notify.add(vsh_name.c_str())] = nm;
-	wdmap[notify.add(fsh_name.c_str())] = nm;
-	return nm;
+	auto mi = assets.find(name);
+	if (mi != assets.end())
+		return (Material*)(mi->second);
+	throw error("Material not found: %s", name);
 }
