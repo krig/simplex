@@ -241,11 +241,15 @@ struct Game : public Scene {
 
 		vec2 mid(sz.x/2, sz.y/2);
 
-		ui.rect(vec2(mid.x  - 50.f, 16.f), vec2(mid.x + 50.f, 32.f),
-		        colors::flatui::orange, true);
+		ui.aarect(mid - vec2(50.f, 50.f), mid + vec2(50.f, 50.f),
+		          colors::flatui::carrot, true);
 
 		ui.line(mid - vec2(0, 16.f), mid + vec2(0, 16.f), colors::flatui::asbestos);
 		ui.line(mid - vec2(16.f, 0), mid + vec2(16.f, 0), colors::flatui::asbestos);
+
+		ui.text(vec2(16.f, 16.f), Color(0xffffffff), "Testing: %d x %d",
+		        sz.x, sz.y);
+
 		ui.end();
 
 		screen.present();

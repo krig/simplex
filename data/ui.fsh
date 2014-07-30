@@ -9,5 +9,6 @@ out vec4 fragment;
 uniform sampler2D tex0;
 
 void main() {
-     fragment = texture(tex0, out_texcoord).rgba * out_color;
+     float a = texture(tex0, out_texcoord).r;
+     fragment = out_color * vec4(1, 1, 1, a);
 }

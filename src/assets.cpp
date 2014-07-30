@@ -18,6 +18,9 @@ namespace {
 		case 3:
 			format = (image->format->Rmask == 0x000000ff) ? GL_RGB : GL_BGR;
 			break;
+		case 1:
+			format = GL_RED;
+			break;
 		default:
 			return 0;
 		}
@@ -112,8 +115,20 @@ void Texture2D::load() {
     GLenum format = sdl_format_to_gl(image);
     if (format == 0)
 	    throw error("Unsupported texture format: %s", name.c_str());
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, image->w, image->h,
-                 0, format, GL_UNSIGNED_BYTE, image->pixels);
+    if (format == GL_RED) {
+	    LOG_INFO("monochrome: %dx%d", w, h);
+	    vector<SDL_Color> rgba(w * h);
+	    const uint8_t* px = (const uint8_t*)image->pixels;
+	    for (int i = 0; i < w * h; ++i) {
+		    rgba[i] = image->format->palette->colors[px[i]];
+	    }
+	    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, image->w, image->h,
+	                 0, GL_RGBA, GL_UNSIGNED_BYTE, rgba.data());
+    }
+    else {
+	    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, image->w, image->h,
+	                 0, format, GL_UNSIGNED_BYTE, image->pixels);
+    }
 
 	SDL_FreeSurface(image);
 
