@@ -82,6 +82,7 @@ struct Game : public Scene {
 
 	void init_gl() {
 		glShadeModel(GL_SMOOTH);
+		glLineWidth(2.f);
 		glEnable(GL_CULL_FACE);
 		glLogicOp(GL_INVERT);
 		glEnable(GL_DEPTH_TEST);
@@ -241,8 +242,10 @@ struct Game : public Scene {
 
 		vec2 mid(sz.x/2, sz.y/2);
 
-		ui.aarect(mid - vec2(50.f, 50.f), mid + vec2(50.f, 50.f),
-		          colors::flatui::carrot, true);
+		ui.rect(mid - vec2(50.f, 50.f), mid + vec2(50.f, 50.f),
+		        colors::dawnbringer::black, true);
+		ui.rect(mid - vec2(50.f, 50.f), mid + vec2(50.f, 50.f),
+		        colors::dawnbringer::yellow, false);
 
 		ui.line(mid - vec2(0, 16.f), mid + vec2(0, 16.f), colors::flatui::asbestos);
 		ui.line(mid - vec2(16.f, 0), mid + vec2(16.f, 0), colors::flatui::asbestos);

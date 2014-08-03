@@ -55,4 +55,5 @@ struct Mesh : public Asset {
 	// }
 };
 
-// Mesh* create_mesh(const char* name, Mesher* source);
+//Mesh* create_mesh(const char* name, Mesher* source);
+//Mesh* create_mesh(const char* name, GLenum mode, size_t nelements, size_t size, const void* data);

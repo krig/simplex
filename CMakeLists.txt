@@ -17,6 +17,7 @@ include_directories(lib/glew/include)
 include_directories(lib/stb)
 include_directories(lib/glm)
 include_directories(lib/cpptoml/include)
+include_directories(lib/easing)
 
 include_directories("src")
 file(GLOB_RECURSE sources "src/*.cpp" "src/*.c" "lib/glew/src/glew.c")

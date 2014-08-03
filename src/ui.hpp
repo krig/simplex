@@ -106,7 +106,6 @@ struct UiStack {
 		_vertices.color(clr);
 		_vertices.texcoord(vec2(0, 0));
 		_vertices.vertex(p1);
-		_vertices.color(clr);
 		_vertices.texcoord(vec2(d, d));
 		_vertices.vertex(p2);
 		_vertices.write(_vbo, GL_STREAM_DRAW);
@@ -127,6 +126,22 @@ struct UiStack {
 			_vertices.set_pointer(1, _texcoord);
 			_vertices.set_pointer(2, _color);
 			_vertices.draw();
+		} else {
+			_vertices.begin(GL_LINE_LOOP, { Mesher::Vertex, 2, Mesher::Texcoord, 2, Mesher::Color, 4 });
+			_vertices.color(clr);
+			_vertices.texcoord(vec2(0, 0));
+			_vertices.vertex(p1);
+			_vertices.texcoord(vec2(d, d));
+			_vertices.vertex(vec2(p1.x, p2.y));
+			_vertices.texcoord(vec2(0, 0));
+			_vertices.vertex(p2);
+			_vertices.texcoord(vec2(d, d));
+			_vertices.vertex(vec2(p2.x, p1.y));
+			_vertices.write(_vbo, GL_STREAM_DRAW);
+			_vertices.set_pointer(0, _position);
+			_vertices.set_pointer(1, _texcoord);
+			_vertices.set_pointer(2, _color);
+			_vertices.draw();
 		}
 	}
 
@@ -137,36 +152,6 @@ struct UiStack {
 		_vertices.texcoord(vec2(t2.x, t1.y)).vertex(p2);
 		_vertices.texcoord(vec2(t1.x, t2.y)).vertex(p1);
 		_vertices.texcoord(vec2(t2.x, t2.y)).vertex(vec2(p2.x, p1.y));
-	}
-
-	void aarect(vec2 p1, vec2 p2, Color clr, bool fill) {
-		const float c = 4.f / 1024.f;
-		const float d = 8.f / 1024.f;
-		const vec2 offs(4.f, 4.f);
-		if (fill) {
-			_vertices.begin(GL_TRIANGLES, { Mesher::Vertex, 2, Mesher::Texcoord, 2, Mesher::Color, 4 });
-			_vertices.color(clr);
-
-			_quad(p1,
-			      p1 + offs,
-			      vec2(d, 0),
-			      vec2(d + c, c));
-			_quad(p1 + vec2(offs.x, 0),
-			      vec2(p2.x - offs.x, p1.y + offs.y),
-			      vec2(d + 2.f / 1024.f, 0),
-			      vec2(d + d - 2.f / 1024.f, c));
-			_quad(vec2(p2.x - offs.x, p1.y),
-			      vec2(p2.x, p1.y + offs.y),
-			      vec2(d + c, 0),
-			      vec2(d + d, c));
-
-
-			_vertices.write(_vbo, GL_STREAM_DRAW);
-			_vertices.set_pointer(0, _position);
-			_vertices.set_pointer(1, _texcoord);
-			_vertices.set_pointer(2, _color);
-			_vertices.draw();
-		}
 	}
 
 	void circle(vec2 pos, float r, Color clr, bool fill) {

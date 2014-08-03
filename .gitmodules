@@ -10,3 +10,6 @@
 [submodule "lib/cpptoml"]
 	path = lib/cpptoml
 	url = git@github.com:skystrife/cpptoml.git
+[submodule "lib/easing"]
+	path = lib/easing
+	url = git@github.com:krig/easing.git
