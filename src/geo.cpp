@@ -114,37 +114,37 @@ namespace geo {
 		return verts;
 	}
 
-	void cube::make(const vec3& size, bool invert_normals) {
-		array.gen();
-		array.bind();
+	void make_cube(geometry* obj, const vec3& size, bool invert_normals) {
+		obj->array.gen();
+		obj->array.bind();
 		VBO buffer;
 		buffer.gen();
 		buffer.bind(GL_ARRAY_BUFFER);
 		buffer.data(GL_ARRAY_BUFFER, make_cube_vertices(size, invert_normals));
-		array.pointer(0, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), 0);
-		array.pointer(1, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (const void*)(3*sizeof(float)));
-		array.pointer(2, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (const void*)(6*sizeof(float)));
-		array.attrib(3, vec3(1.f, 1.f, 1.f));
-		array.unbind();
-		nelements = 6 * 2 * 3;
+		obj->array.pointer(0, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), 0);
+		obj->array.pointer(1, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (const void*)(3*sizeof(float)));
+		obj->array.pointer(2, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (const void*)(6*sizeof(float)));
+		obj->array.attrib(3, vec3(1.f, 1.f, 1.f));
+		obj->array.unbind();
+		obj->nelements = 6 * 2 * 3;
 	}
 
-	void cone::make(float height, float radius, int subdivisions, bool invert_normals) {
-		array.gen();
-		array.bind();
+	void make_cone(geometry* obj, float height, float radius, int subdivisions, bool invert_normals) {
+		obj->array.gen();
+		obj->array.bind();
 		VBO buffer;
 		buffer.gen();
 		buffer.bind(GL_ARRAY_BUFFER);
 		buffer.data(GL_ARRAY_BUFFER, make_cone_vertices(height, radius, subdivisions, invert_normals));
-		array.pointer(0, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), 0);
-		array.pointer(1, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (const void*)(3*sizeof(float)));
-		array.pointer(2, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (const void*)(6*sizeof(float)));
-		array.attrib(3, vec3(1.f, 1.f, 1.f));
-		array.unbind();
-		nelements = 3 * subdivisions;
+		obj->array.pointer(0, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), 0);
+		obj->array.pointer(1, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (const void*)(3*sizeof(float)));
+		obj->array.pointer(2, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (const void*)(6*sizeof(float)));
+		obj->array.attrib(3, vec3(1.f, 1.f, 1.f));
+		obj->array.unbind();
+		obj->nelements = 3 * subdivisions;
 	}
 
-	void plane::make(float segment_size, int segments) {
+	void make_plane(geometry* obj, float segment_size, int segments) {
 
 		vector<cube_vert> verts;
 
@@ -163,17 +163,17 @@ namespace geo {
 			}
 		}
 
-		array.gen();
-		array.bind();
+		obj->array.gen();
+		obj->array.bind();
 		VBO buffer;
 		buffer.gen();
 		buffer.bind(GL_ARRAY_BUFFER);
 		buffer.data(GL_ARRAY_BUFFER, verts);
-		array.pointer(0, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), 0);
-		array.pointer(1, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (const void*)(3*sizeof(float)));
-		array.pointer(2, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (const void*)(6*sizeof(float)));
-		array.unbind();
-		nelements = segments * segments * 6;
+		obj->array.pointer(0, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), 0);
+		obj->array.pointer(1, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (const void*)(3*sizeof(float)));
+		obj->array.pointer(2, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (const void*)(6*sizeof(float)));
+		obj->array.unbind();
+		obj->nelements = segments * segments * 6;
 	}
 
 }

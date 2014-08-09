@@ -269,24 +269,24 @@ struct Game : public Scene {
 	}
 
 	void make_cubes() {
-		typedef unique_ptr<geo::cube> cube_ptr;
+		typedef unique_ptr<geo::instance> cube_ptr;
 		{
-			cube_ptr cube1(new geo::cube);
-			cube1->make(vec3(0.5f, 0.5f, 0.5f));
+			cube_ptr cube1(new geo::instance);
+			geo::make_cube(cube1.get(), vec3(0.5f, 0.5f, 0.5f));
 			cube1->transform = glm::translate(vec3(0.f, 0.5f, 0.f));
 			cubes.push_back(move(cube1));
 		}
 
 		for (int i = -10; i < 10; ++i) {
-			cube_ptr cube1(new geo::cube);
-			cube1->make(vec3(0.25f, 0.25f, 0.25f));
+			cube_ptr cube1(new geo::instance);
+			geo::make_cube(cube1.get(), vec3(0.25f, 0.25f, 0.25f));
 			cube1->transform = glm::translate(vec3(1.f + i, 0.5f, 0.f));
 			cubes.push_back(move(cube1));
 		}
 
 		for (int i = -10; i < 10; ++i) {
-			cube_ptr cube1(new geo::cube);
-			cube1->make(vec3(0.25f, 0.25f, 0.25f));
+			cube_ptr cube1(new geo::instance);
+			geo::make_cube(cube1.get(), vec3(0.25f, 0.25f, 0.25f));
 			cube1->transform = glm::translate(vec3(0.f, 0.5f, 1.f + i));
 			cubes.push_back(move(cube1));
 		}
@@ -295,7 +295,7 @@ struct Game : public Scene {
 	}
 
 	void make_groundplane() {
-		plane.make();
+		geo::make_plane(&plane);
 	}
 
 	void render_groundplane() {
@@ -329,7 +329,7 @@ struct Game : public Scene {
 	}
 
 	void make_sky() {
-		sky.make(5.f, 5.f, 31, true);
+		geo::make_cone(&sky, 5.f, 5.f, 31, true);
 	}
 
 	void render_sky() {
@@ -361,9 +361,9 @@ struct Game : public Scene {
 	Texture2D* plane_tex;
 	Material* material_basic;
 	Material* material_sky;
-	geo::plane plane;
-	vector<unique_ptr<geo::cube>> cubes;
-	geo::cone sky;
+	geo::instance plane;
+	vector<unique_ptr<geo::instance>> cubes;
+	geo::instance sky;
 	vec3 bobd;
 	float a, b, c;
 	bool wireframe_mode;

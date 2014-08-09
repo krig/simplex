@@ -43,22 +43,13 @@ namespace geo {
 		size_t nelements;
 	};
 
-	struct cube : public geometry {
-		cube() : geometry(), transform() {}
-		void make(const vec3& size, bool invert_normals = false);
+	struct instance : public geometry {
+		instance() : geometry(), transform() {}
 		mat4 transform;
 	};
 
-	struct cone : public geometry {
-		cone() : geometry(), transform() {}
-		void make(float height, float radius, int subdivisions = 6, bool invert_normals = false);
-		mat4 transform;
-	};
-
-	struct plane : public geometry {
-		plane() : geometry(), transform() {}
-		void make(float segment_size = 3.f, int segments = 100);
-		mat4 transform;
-	};
+	void make_cube(geometry* obj, const vec3& size, bool invert_normals = false);
+	void make_cone(geometry* obj, float height, float radius, int subdivisions = 6, bool invert_normals = false);
+	void make_plane(geometry* obj, float segment_size = 3.f, int segments = 100);
 
 }
