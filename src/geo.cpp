@@ -5,7 +5,7 @@
 
 namespace geo {
 
-	vector<cube_vert> make_cube_vertices(const vec3& size, bool skybox) {
+	vector<cube_vert> make_cube_vertices(const vec3& size, bool invert_normals) {
 
 		vec3 corners[8] = {
 			{-1.f,-1.f,-1.f}, // bottom
@@ -72,7 +72,7 @@ namespace geo {
 			{ corners[7], { 1.f, 0.f, 0.f }, { 1.f, 1.f } },
 		};
 
-		if (skybox) {
+		if (invert_normals) {
 			for (size_t i = 0; i < verts.size(); i += 3) {
 				swap(verts[i + 1].pos, verts[i + 2].pos);
 				swap(verts[i + 1].texcoord, verts[i + 2].texcoord);
@@ -85,21 +85,66 @@ namespace geo {
 		return verts;
 	}
 
-	void cube::make(const vec3& size, bool skybox) {
+	vector<cube_vert> make_cone_vertices(float height, float radius, int subdivisions, bool invert_normals) {
+		vector<cube_vert> verts;
+		verts.reserve(3 * subdivisions);
+		//verts.push_back
+
+		float dsd = 1.f / (float)subdivisions;
+		float dangle = TWOPI / (float)subdivisions;
+		vec3 p0(0.f, height, 0.f);
+		for (int i = 0; i < subdivisions; ++i) {
+			float fi = (float)i;
+			vec3 p1(radius * cosf(dangle * fi), 0.f, radius * sinf(dangle * fi));
+			vec3 p2(radius * cosf(dangle * fi + dangle), 0.f, radius * sinf(dangle * fi + dangle));
+
+			vec3 mp = p1 + (p2 - p1) * 0.5f;
+			mp.y = height * 0.5f;
+
+			if (invert_normals) {
+				verts.push_back({ p0, -glm::normalize(mp), vec2(0.f, 1.f) });
+				verts.push_back({ p1, -glm::normalize(p1), vec2(dsd * fi, 0.f) });
+				verts.push_back({ p2, -glm::normalize(p2), vec2(dsd * fi + dsd, 0.f) });
+			} else {
+				verts.push_back({ p0, glm::normalize(mp), vec2(0.f, 1.f) });
+				verts.push_back({ p2, glm::normalize(p2), vec2(dsd * fi + dsd, 0.f) });
+				verts.push_back({ p1, glm::normalize(p1), vec2(dsd, 0.f) });
+			}
+		}
+		return verts;
+	}
+
+	void cube::make(const vec3& size, bool invert_normals) {
 		array.gen();
 		array.bind();
+		VBO buffer;
 		buffer.gen();
 		buffer.bind(GL_ARRAY_BUFFER);
-		buffer.data(GL_ARRAY_BUFFER, make_cube_vertices(size, skybox));
+		buffer.data(GL_ARRAY_BUFFER, make_cube_vertices(size, invert_normals));
 		array.pointer(0, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), 0);
 		array.pointer(1, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (const void*)(3*sizeof(float)));
 		array.pointer(2, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (const void*)(6*sizeof(float)));
 		array.attrib(3, vec3(1.f, 1.f, 1.f));
 		array.unbind();
+		nelements = 6 * 2 * 3;
 	}
 
+	void cone::make(float height, float radius, int subdivisions, bool invert_normals) {
+		array.gen();
+		array.bind();
+		VBO buffer;
+		buffer.gen();
+		buffer.bind(GL_ARRAY_BUFFER);
+		buffer.data(GL_ARRAY_BUFFER, make_cone_vertices(height, radius, subdivisions, invert_normals));
+		array.pointer(0, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), 0);
+		array.pointer(1, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (const void*)(3*sizeof(float)));
+		array.pointer(2, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (const void*)(6*sizeof(float)));
+		array.attrib(3, vec3(1.f, 1.f, 1.f));
+		array.unbind();
+		nelements = 3 * subdivisions;
+	}
 
-	void plane::make() {
+	void plane::make(float segment_size, int segments) {
 
 		vector<cube_vert> verts;
 
@@ -120,6 +165,7 @@ namespace geo {
 
 		array.gen();
 		array.bind();
+		VBO buffer;
 		buffer.gen();
 		buffer.bind(GL_ARRAY_BUFFER);
 		buffer.data(GL_ARRAY_BUFFER, verts);
@@ -127,6 +173,7 @@ namespace geo {
 		array.pointer(1, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (const void*)(3*sizeof(float)));
 		array.pointer(2, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (const void*)(6*sizeof(float)));
 		array.unbind();
+		nelements = segments * segments * 6;
 	}
 
 }

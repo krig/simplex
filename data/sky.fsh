@@ -9,5 +9,5 @@ in float gradient;
 out vec4 fragment;
 
 void main() {
-	fragment = vec4(mix(sky_dark, sky_light, smoothstep(0, 10.f, gradient)), 1);
+	fragment = vec4(mix(sky_light, sky_dark, smoothstep(0, 5.f, gradient)), 1);
 }

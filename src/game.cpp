@@ -329,11 +329,12 @@ struct Game : public Scene {
 	}
 
 	void make_sky() {
-		sky.make(vec3(5.f, 5.f, 5.f), true);
+		sky.make(5.f, 5.f, 31, true);
 	}
 
 	void render_sky() {
 		mat4 skyview = player.make_sky_view_matrix();
+		skyview = glm::translate(skyview, vec3(0.f, -2.5f, 0.f));
 
 		Material* material = material_sky;
 		material->use();
@@ -362,7 +363,7 @@ struct Game : public Scene {
 	Material* material_sky;
 	geo::plane plane;
 	vector<unique_ptr<geo::cube>> cubes;
-	geo::cube sky;
+	geo::cone sky;
 	vec3 bobd;
 	float a, b, c;
 	bool wireframe_mode;

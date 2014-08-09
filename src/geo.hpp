@@ -30,42 +30,34 @@ namespace geo {
 		vec2 texcoord;
 	};
 
-	struct cube {
-		cube() {
-		}
-
-		// create the cube geometry
-		void make(const vec3& size, bool skybox = false);
+	struct geometry {
+		geometry() : array(), nelements(0) {}
 
 		void render() {
 			array.bind();
-			glDrawArrays(GL_TRIANGLES, 0, 6 * 2 * 3);
+			glDrawArrays(GL_TRIANGLES, 0, nelements);
 			array.unbind();
 		}
 
 		VAO array;
-		VBO buffer;
+		size_t nelements;
+	};
+
+	struct cube : public geometry {
+		cube() : geometry(), transform() {}
+		void make(const vec3& size, bool invert_normals = false);
 		mat4 transform;
 	};
 
-	struct plane {
-		plane() {
-			segment_size = 3.f;
-			segments = 100;
-		}
+	struct cone : public geometry {
+		cone() : geometry(), transform() {}
+		void make(float height, float radius, int subdivisions = 6, bool invert_normals = false);
+		mat4 transform;
+	};
 
-		void make();
-
-		void render() {
-			array.bind();
-			glDrawArrays(GL_TRIANGLES, 0, segments * segments * 6);
-			array.unbind();
-		}
-
-		float segment_size;
-		int segments;
-		VAO array;
-		VBO buffer;
+	struct plane : public geometry {
+		plane() : geometry(), transform() {}
+		void make(float segment_size = 3.f, int segments = 100);
 		mat4 transform;
 	};
 
