@@ -226,7 +226,7 @@ struct Game : public Scene {
 		glClearDepth(1.f);
 		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
-		glPolygonMode(GL_FRONT_AND_BACK, wireframe_mode ? GL_LINE : GL_FILL);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 		modelview.load(player.make_view_matrix());
 
@@ -234,26 +234,17 @@ struct Game : public Scene {
 
 		glClear(GL_DEPTH_BUFFER_BIT);
 
+		if (wireframe_mode)
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
 		render_groundplane();
 
 		render_cubes();
 
-		ui.begin(sz);
+		if (wireframe_mode)
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-		vec2 mid(sz.x/2, sz.y/2);
-
-		ui.rect(mid - vec2(50.f, 50.f), mid + vec2(50.f, 50.f),
-		        colors::dawnbringer::black, true);
-		ui.rect(mid - vec2(50.f, 50.f), mid + vec2(50.f, 50.f),
-		        colors::dawnbringer::yellow, false);
-
-		ui.line(mid - vec2(0, 16.f), mid + vec2(0, 16.f), colors::flatui::asbestos);
-		ui.line(mid - vec2(16.f, 0), mid + vec2(16.f, 0), colors::flatui::asbestos);
-
-		ui.text(vec2(16.f, 16.f), Color(0xffffffff), "Testing: %d x %d",
-		        sz.x, sz.y);
-
-		ui.end();
+		render_ui(sz);
 
 		screen.present();
 
@@ -266,6 +257,25 @@ struct Game : public Scene {
 			LOG_ERROR("GL error: %d", err);
 			err = glGetError();
 		}
+	}
+
+	void render_ui(SDL_Point sz) {
+		ui.begin(sz);
+
+		vec2 mid(sz.x/2, sz.y/2);
+
+		//ui.rect(mid - vec2(50.f, 50.f), mid + vec2(50.f, 50.f),
+		//        colors::dawnbringer::black, true);
+		//ui.rect(mid - vec2(50.f, 50.f), mid + vec2(50.f, 50.f),
+		//        colors::dawnbringer::yellow, false);
+
+		ui.line(mid - vec2(0, 16.f), mid + vec2(0, 16.f), colors::flatui::asbestos.with_alpha(0.6f));
+		ui.line(mid - vec2(16.f, 0), mid + vec2(16.f, 0), colors::flatui::asbestos.with_alpha(0.6f));
+
+		ui.text(vec2(16.f, 16.f), Color(0xffffffff), "Testing: %d x %d",
+		        sz.x, sz.y);
+
+		ui.end();
 	}
 
 	void make_cubes() {

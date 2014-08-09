@@ -27,6 +27,10 @@ struct Color : public vec4 {
 		return ((uint32_t)(a * 255.f) << 24) | ((uint32_t)(b * 255.f) << 16) | ((uint32_t)(g * 255.f) << 8) | (uint32_t)(r * 255.f);
 	}
 
+	Color with_alpha(float alpha) const {
+		return Color(r, g, b, alpha);
+	}
+
 };
 
 namespace colors {
