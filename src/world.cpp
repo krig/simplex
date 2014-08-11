@@ -5,3 +5,16 @@
 #include "world.hpp"
 
 
+namespace world {
+	void init() {
+	}
+
+	void update(double dt) {
+
+	}
+
+	void render() {
+
+		// render_visible_chunks
+	}
+}

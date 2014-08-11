@@ -10,6 +10,7 @@
 #include "matrixstack.hpp"
 #include "worley.hpp"
 #include "ui.hpp"
+#include "world.hpp"
 
 namespace {
 	float mix(float a, float b, float t) {
@@ -53,6 +54,7 @@ namespace {
 		}
 		return v;
 	}
+
 }
 
 struct Game : public Scene {
@@ -96,6 +98,7 @@ struct Game : public Scene {
 		make_sky();
 		make_groundplane();
 		make_cubes();
+		world::init();
 
 		SDL_Point sz = screen.get_size();
 		projection.load(glm::perspective<float>(deg2rad(50.f), (float)sz.x/(float)sz.y, 0.1, 100.0));
@@ -116,7 +119,7 @@ struct Game : public Scene {
 			});
 		double d = 10000. * util::rand01();
 		float freq = 16.f;
-		float lacunarity = 2.f;
+		float lacunarity = 2.17f;
 		float side = 32.f;
 		plane_tex = gen_texture("planetex", side, side, [=](int x, int y) {
 				float n = octave_perlin<3>(freq, lacunarity, side, (float)x / side, (float)y / side, d);
@@ -204,6 +207,9 @@ struct Game : public Scene {
 		//printf("%d, %d, %u\n", x, y, buttons);
 		handle_input(dt);
 		update_assets();
+
+		world::update(dt);
+
 		update_daycycle(dt);
 		update_chunks(dt);
 		update_ecosystem(dt);
@@ -238,8 +244,8 @@ struct Game : public Scene {
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 		render_groundplane();
-
 		render_cubes();
+		world::render();
 
 		if (wireframe_mode)
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
