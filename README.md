@@ -1,4 +1,4 @@
-# simplex
+# simplex Deneb Kaitos
 
 Time to get back into GL. 3D, procedural, that's the idea at least.
 

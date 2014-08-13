@@ -3,6 +3,8 @@
 #include "geo.hpp"
 #include "mesher.hpp"
 
+#include <deque>
+
 namespace geo {
 
 	vector<cube_vert> make_cube_vertices(const vec3& size, bool invert_normals) {
@@ -175,5 +177,158 @@ namespace geo {
 		obj->array.unbind();
 		obj->nelements = segments * segments * 6;
 	}
+
+	namespace {
+		void add_face(std::deque<vec3>& faceverts, vec3 a, vec3 b, vec3 c) {
+			faceverts.push_back(a);
+			faceverts.push_back(b);
+			faceverts.push_back(c);
+		}
+
+		void add_face(vector<cube_vert>& tris, vec3 a, vec3 b, vec3 c) {
+			tris.push_back({a, a, vec2(0, a.y * 0.5f + 0.5f)});
+			tris.push_back({b, b, vec2(0, b.y * 0.5f + 0.5f)});
+			tris.push_back({c, c, vec2(0, c.y * 0.5f + 0.5f)});
+		}
+
+		void initial_icosahedron(std::deque<vec3>& faceverts) {
+			vector<vec3> verts(12);
+
+			double theta = 26.56505117707799 * PI / 180.0; // refer paper for theta value
+
+			double stheta = std::sin(theta);
+			double ctheta = std::cos(theta);
+
+			verts[0] = vec3(0.0f, 0.0f, -1.0f); // the lower vertex
+
+			// the lower pentagon
+			double phi = PI / 5.0;
+			for (int i = 1; i < 6; ++i) {
+				verts[i] = vec3(ctheta * std::cos(phi), ctheta * std::sin(phi), -stheta);
+				phi += 2.0 * PI / 5.0;
+			}
+
+			// the upper pentagon
+			phi = 0.0;
+			for (int i = 6; i < 11; ++i) {
+				verts[i] = vec3(ctheta * std::cos(phi), ctheta * std::sin(phi), stheta);
+				phi += 2.0 * PI / 5.0;
+			}
+
+			verts[11] = vec3(0.0f, 0.0f, 1.0f); // the upper vertex
+
+			add_face(faceverts, verts[0], verts[2], verts[1]);
+			add_face(faceverts, verts[0], verts[3], verts[2]);
+			add_face(faceverts, verts[0], verts[4], verts[3]);
+			add_face(faceverts, verts[0], verts[5], verts[4]);
+			add_face(faceverts, verts[0], verts[1], verts[5]);
+			add_face(faceverts, verts[1], verts[2], verts[7]);
+			add_face(faceverts, verts[2], verts[3], verts[8]);
+			add_face(faceverts, verts[3], verts[4], verts[9]);
+			add_face(faceverts, verts[4], verts[5], verts[10]);
+			add_face(faceverts, verts[5], verts[1], verts[6]);
+			add_face(faceverts, verts[1], verts[7], verts[6]);
+			add_face(faceverts, verts[2], verts[8], verts[7]);
+			add_face(faceverts, verts[3], verts[9], verts[8]);
+			add_face(faceverts, verts[4], verts[10], verts[9]);
+			add_face(faceverts, verts[5], verts[6], verts[10]);
+			add_face(faceverts, verts[6], verts[7], verts[11]);
+			add_face(faceverts, verts[7], verts[8], verts[11]);
+			add_face(faceverts, verts[8], verts[9], verts[11]);
+			add_face(faceverts, verts[9], verts[10], verts[11]);
+			add_face(faceverts, verts[10], verts[6], verts[11]);
+		}
+
+		void subdivide(std::deque<vec3>& faceverts) {
+			// for each subdivision pass, pop N/3 verts
+			// off, push the subdivided verts back
+			size_t nfaces = faceverts.size() / 3;
+			for (size_t i = 0; i < nfaces; ++i) {
+				vec3 v1 = faceverts.front(); faceverts.pop_front();
+				vec3 v2 = faceverts.front(); faceverts.pop_front();
+				vec3 v3 = faceverts.front(); faceverts.pop_front();
+				vec3 v4 = glm::normalize(v1 + v2);
+				vec3 v5 = glm::normalize(v2 + v3);
+				vec3 v6 = glm::normalize(v3 + v1);
+				faceverts.push_back(v1);
+				faceverts.push_back(v4);
+				faceverts.push_back(v6);
+				faceverts.push_back(v4);
+				faceverts.push_back(v2);
+				faceverts.push_back(v5);
+				faceverts.push_back(v6);
+				faceverts.push_back(v5);
+				faceverts.push_back(v3);
+				faceverts.push_back(v6);
+				faceverts.push_back(v4);
+				faceverts.push_back(v5);
+			}
+		}
+
+		void make_sphere_verts(vector<cube_vert>& tris, float radius, int subdivisions, bool invert_normals) {
+			std::deque<vec3> faceverts;
+			initial_icosahedron(faceverts);
+
+			// subdivide!
+			for (int sd = 0; sd < subdivisions; ++sd) {
+				subdivide(faceverts);
+			}
+
+			tris.clear();
+			tris.reserve(faceverts.size());
+			for (vec3 v : faceverts)
+				tris.push_back({v, v, vec2(0, v.y * 0.5f + 0.5f)});
+
+			for (size_t i = 0; i < tris.size(); ++i) {
+				tris[i].pos *= radius;
+			}
+
+			if (invert_normals) {
+				for (size_t i = 0; i < tris.size(); i += 3) {
+					swap(tris[i + 1].pos, tris[i + 2].pos);
+					swap(tris[i + 1].texcoord, tris[i + 2].texcoord);
+					swap(tris[i + 1].normal, tris[i + 2].normal);
+					tris[i].normal = -tris[i].normal;
+					tris[i+1].normal = -tris[i+1].normal;
+					tris[i+2].normal = -tris[i+2].normal;
+				}
+			}
+		}
+	}
+
+
+
+	void make_icosahedron(geometry* obj, float radius, bool invert_normals) {
+		obj->array.gen();
+		obj->array.bind();
+		VBO buffer;
+		buffer.gen();
+		buffer.bind(GL_ARRAY_BUFFER);
+		vector<cube_vert> tris;
+		make_sphere_verts(tris, radius, 0, invert_normals);
+		buffer.data(GL_ARRAY_BUFFER, tris);
+		obj->array.pointer(0, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), 0);
+		obj->array.pointer(1, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (const void*)(3*sizeof(float)));
+		obj->array.pointer(2, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (const void*)(6*sizeof(float)));
+		obj->array.unbind();
+		obj->nelements = tris.size();
+	}
+
+	void make_sphere(geometry* obj, float radius, int subdivisions, bool invert_normals) {
+		obj->array.gen();
+		obj->array.bind();
+		VBO buffer;
+		buffer.gen();
+		buffer.bind(GL_ARRAY_BUFFER);
+		vector<cube_vert> tris;
+		make_sphere_verts(tris, radius, subdivisions, invert_normals);
+		buffer.data(GL_ARRAY_BUFFER, tris);
+		obj->array.pointer(0, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), 0);
+		obj->array.pointer(1, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (const void*)(3*sizeof(float)));
+		obj->array.pointer(2, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (const void*)(6*sizeof(float)));
+		obj->array.unbind();
+		obj->nelements = tris.size();
+	}
+
 
 }

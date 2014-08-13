@@ -51,5 +51,7 @@ namespace geo {
 	void make_cube(geometry* obj, const vec3& size, bool invert_normals = false);
 	void make_cone(geometry* obj, float height, float radius, int subdivisions = 6, bool invert_normals = false);
 	void make_plane(geometry* obj, float segment_size = 3.f, int segments = 100);
+	void make_icosahedron(geometry* obj, float radius = 1.f, bool invert_normals = false);
+	void make_sphere(geometry* obj, float radius = 1.f, int subdivisions = 5, bool invert_normals = false);
 
 }

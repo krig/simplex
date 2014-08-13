@@ -218,6 +218,10 @@ struct Game : public Scene {
 	}
 
 	void update_daycycle(double dt) {
+		double daylength = 5.0 / (60.0 * 60.0);
+		a += daylength * dt;
+		while (a > 1.f)
+			a -= 1.f;
 	}
 	void update_chunks(double dt) {
 	}
@@ -232,16 +236,14 @@ struct Game : public Scene {
 		glClearDepth(1.f);
 		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		if (wireframe_mode)
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 		modelview.load(player.make_view_matrix());
 
 		render_sky();
 
 		glClear(GL_DEPTH_BUFFER_BIT);
-
-		if (wireframe_mode)
-			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 		render_groundplane();
 		render_cubes();
@@ -327,8 +329,6 @@ struct Game : public Scene {
 	}
 
 	void render_cubes() {
-		a += 0.04f, b += 0.02f, c += 0.03f;
-
 		Material* material = material_basic;
 		cube_tex->bind(0);
 		material->use();
@@ -345,18 +345,20 @@ struct Game : public Scene {
 	}
 
 	void make_sky() {
-		geo::make_cone(&sky, 5.f, 5.f, 31, true);
+		//geo::make_cone(&sky, 5.f, 5.f, 31, true);
+		geo::make_sphere(&sky, 5.f, 4, true);
 	}
 
 	void render_sky() {
 		mat4 skyview = player.make_sky_view_matrix();
-		skyview = glm::translate(skyview, vec3(0.f, -2.5f, 0.f));
-
 		Material* material = material_sky;
 		material->use();
 		material->uniform("projection", projection.get());
 		material->uniform("view", skyview);
 		material->uniform("model", sky.transform);
+		vec3 sundir = vec3(0.f, -sinf(TWOPI*a), cosf(TWOPI*a));
+		material->uniform("sundir", glm::normalize(sundir));
+		material->uniform("sun_color", vec3(colors::tango::orange_7));
 		material->uniform("sky_dark", vec3(colors::tango::skyblue_3));
 		material->uniform("sky_light", vec3(colors::tango::skyblue_6));
 		sky.render();
