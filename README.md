@@ -406,3 +406,28 @@ blocks in neighbour chunks)
 
 # renderable
 
+
+
+# AO
+
+http://www.reddit.com/r/gamedev/comments/1gvk18/how_to_show_edges_of_a_flatcolored_cube/cao9n91
+
+The AO is calculated per-vertex when the vertex buffers are generated
+from the voxel data. The light value to use is different for each
+vertex of each quad on each voxel to be drawn, and is obtained by
+performing 3 voxel data lookups per vertex at mesh generation time.
+For this I personally use a lookup table of (6 quads x 4 vertices x 3
+neighbors =) 72 neighbor offsets; the light values for AO are based on
+how many of the current vertex's 3 "surrounding voxels" are "covering
+it up" (i.e. casting an ambient occlusion shadow), which means the "AO
+factor" (a measure of how much shadow to apply for each vertex) can be
+contained in just 2 bits of data (0, 1, 2 or 3). The shadow is then
+computed in the vertex shader from those 2 bits, and the vertex color
+gets smoothly interpolated on its way to the frag shader.  The nice
+thing about the 2 bit footprint per vertex is that it's an easy value
+to include in a hash (along with a palette or tile number and other
+rendering parameters) -- you can use per-vertex or per-voxel hashes to
+compute runs and stitch together adjacent cubes into
+larger-than-unit-size faces, which greatly reduces VBO sizes and oh
+god this is why I don't have any friends :D
+

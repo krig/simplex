@@ -1,5 +1,6 @@
 #version 130
 
+uniform mat4 MV;
 uniform mat4 MVP;
 uniform mat3 normal_matrix;
 
@@ -10,9 +11,11 @@ in vec3 in_color;
 out vec3 out_normal;
 out vec2 out_texcoord;
 out vec3 out_color;
+out float out_depth;
 
 void main(){
 	gl_Position = MVP * vec4(position, 1);
+	out_depth = length((MV * vec4(position, 1)).xyz);
 	out_normal = normal_matrix * in_normal;
 	out_texcoord = in_texcoord;
 	out_color = in_color;

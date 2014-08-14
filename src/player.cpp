@@ -30,12 +30,18 @@ Player::Player() {
     velocity = vec3(0, 0, 0);
     jumpcount = 0.f;
     onground = true;
+    ducking = false;
+    freecam = false;
 }
 
 void Player::move(const glm::vec3& dir) {
-	if (onground) {
-		mat4 ori = glm::rotate(mat4(), yaw, vec3(0.f, 1.f, 0.f));
-		velocity += vec3(ori * vec4(dir, 1.f));
+	mat4 ori = glm::rotate(mat4(), yaw, vec3(0.f, 1.f, 0.f));
+	vec3 dmove = vec3(ori * vec4(dir, 1.f));
+	if (freecam) {
+		velocity.x += dmove.x;
+		velocity.z += dmove.z;
+	} else if (onground) {
+		velocity += dmove;
 	}
 }
 
@@ -53,12 +59,24 @@ void Player::look(float by, float x) {
         pitch = -HALFPI;
 }
 
+void Player::duck(bool ducking) {
+	this->ducking = ducking;
+}
+
 void Player::jump() {
-    if (onground && jumpcount <= 0.f) {
+	if (freecam) {
+		jumpcount = 0.2f;
+		velocity.y = 10.f;
+	}
+	else if (onground && jumpcount <= 0.f) {
         jumpcount = 0.2f;
         velocity.y += 8.f + 2.f * std::min(1.f, (float)abs(glm::length(velocity)));
         onground = false;
     }
+}
+
+void Player::toggle_freecam() {
+	freecam = !freecam;
 }
 
 void Player::update(double dt) {
@@ -71,18 +89,29 @@ void Player::update(double dt) {
         pos.y = 0.f;
         onground = true;
     }
-    if (onground) {
-        velocity.x *= 0.8f;
-        velocity.z *= 0.8f;
+
+    if (freecam) {
+	    if (ducking) {
+		    velocity.y = -10.f;
+	    }
+
+	    velocity *= 0.8f;
     } else {
-	    //velocity.x *= 0.83f;
-	    //velocity.z *= 0.83f;
+	    if (onground) {
+		    velocity.x *= 0.8f;
+		    velocity.z *= 0.8f;
+	    } else {
+		    //velocity.x *= 0.83f;
+		    //velocity.z *= 0.83f;
+	    }
+	    velocity.y -= 9.8f * 3.33f * dt;
     }
-    velocity.y -= 9.8f * 3.33f * dt;
 }
 
 // calculate world -> view matrix
 mat4 Player::make_view_matrix() {
+	if (ducking)
+		return fps_view(pos + (offset * 0.75f) + bob, pitch, yaw);
     return fps_view(pos + offset + bob, pitch, yaw);
 }
 

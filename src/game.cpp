@@ -84,7 +84,7 @@ struct Game : public Scene {
 
 	void init_gl() {
 		glShadeModel(GL_SMOOTH);
-		glLineWidth(2.f);
+		//glLineWidth(2.f);
 		glEnable(GL_CULL_FACE);
 		glLogicOp(GL_INVERT);
 		glEnable(GL_DEPTH_TEST);
@@ -101,7 +101,7 @@ struct Game : public Scene {
 		world::init();
 
 		SDL_Point sz = screen.get_size();
-		projection.load(glm::perspective<float>(deg2rad(50.f), (float)sz.x/(float)sz.y, 0.1, 100.0));
+		projection.load(glm::perspective<float>(deg2rad(50.f), (float)sz.x/(float)sz.y, 0.1, 16.0 * 32.0));
 		glViewport(0, 0, sz.x, sz.y);
 	}
 
@@ -137,6 +137,9 @@ struct Game : public Scene {
 			switch (e->key.keysym.sym) {
 			case SDLK_F1: {
 				wireframe_mode = !wireframe_mode;
+			} break;
+			case SDLK_F2: {
+				player.toggle_freecam();
 			} break;
 			case SDLK_ESCAPE: {
 				running  = false;
@@ -179,6 +182,8 @@ struct Game : public Scene {
 		if (state[SDL_SCANCODE_SPACE])
 			player.jump();
 
+		player.duck(state[SDL_SCANCODE_LSHIFT] != 0);
+
 		if (state[SDL_SCANCODE_W] || state[SDL_SCANCODE_S]) {
 			player.bob += vec3(sinf(bobd.x) * 0.003f, cosf(bobd.y) * 0.006f, 0.f);
 			bobd.x += speed * 1.6f;
@@ -218,7 +223,7 @@ struct Game : public Scene {
 	}
 
 	void update_daycycle(double dt) {
-		double daylength = 5.0 / (60.0 * 60.0);
+		double daylength = 1.0 / (60.0 * 5.0);
 		a += daylength * dt;
 		while (a > 1.f)
 			a -= 1.f;
@@ -280,8 +285,8 @@ struct Game : public Scene {
 		ui.line(mid - vec2(0, 16.f), mid + vec2(0, 16.f), colors::flatui::asbestos.with_alpha(0.6f));
 		ui.line(mid - vec2(16.f, 0), mid + vec2(16.f, 0), colors::flatui::asbestos.with_alpha(0.6f));
 
-		ui.text(vec2(16.f, 16.f), Color(0xffffffff), "Testing: %d x %d",
-		        sz.x, sz.y);
+		ui.text(vec2(16.f, 16.f), Color(0xffffffff), "%f",
+		        a);
 
 		ui.end();
 	}
@@ -322,6 +327,7 @@ struct Game : public Scene {
 		plane_tex->bind(0);
 		material->use();
 		material->uniform("tex0", 0);
+		material->uniform("MV", modelview.get());
 		material->uniform("MVP", projection.get() * modelview.get());
 		material->uniform("normal_matrix", mat3());
 		plane.render();
@@ -337,6 +343,7 @@ struct Game : public Scene {
 		for (const auto& cube : cubes) {
 			modelview.push();
 			modelview *= cube->transform;
+			material->uniform("MV", modelview.get());
 			material->uniform("MVP", projection.get() * modelview.get());
 			material->uniform("normal_matrix", mat3(cube->transform));
 			cube->render();
@@ -346,7 +353,7 @@ struct Game : public Scene {
 
 	void make_sky() {
 		//geo::make_cone(&sky, 5.f, 5.f, 31, true);
-		geo::make_sphere(&sky, 5.f, 4, true);
+		geo::make_sphere(&sky, 5.f, 2, true);
 	}
 
 	void render_sky() {
@@ -359,8 +366,24 @@ struct Game : public Scene {
 		vec3 sundir = vec3(0.f, -sinf(TWOPI*a), cosf(TWOPI*a));
 		material->uniform("sundir", glm::normalize(sundir));
 		material->uniform("sun_color", vec3(colors::tango::orange_7));
-		material->uniform("sky_dark", vec3(colors::tango::skyblue_3));
-		material->uniform("sky_light", vec3(colors::tango::skyblue_6));
+
+		float daylight = sin(TWOPI * a) * 0.5f + 0.5f; //fabs(a * 4.f - 1.f);
+		float morninglight = pow(fabs(cos(TWOPI * a)), 8.0);
+
+		// 1 = midday
+		// -1 = midnight
+
+		// red 0xffb83932
+
+		material->uniform("sky_dark",  vec3(mix(Color(0xff000000),
+		                                        Color(0xffa9b2a1), daylight)));
+		material->uniform("sky_light", vec3(mix(mix(Color(0xff000000),
+		                                            Color(0xff61828a), daylight),
+		                                        Color(0xffb83932), morninglight)));
+		//material->uniform("sky_dark", vec3(mix(Color(0xffa9b2a1),
+		//                                        Color(0xff000010), time_of_day)));//colors::tango::skyblue_3));
+		//material->uniform("sky_light", vec3(mix(Color(0xff61828a),
+		//                                        Color(0xff202030), time_of_day)));//colors::tango::skyblue_6));
 		sky.render();
 	}
 
