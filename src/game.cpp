@@ -83,7 +83,6 @@ struct Game : public Scene {
 	}
 
 	void init_gl() {
-		glShadeModel(GL_SMOOTH);
 		//glLineWidth(2.f);
 		glEnable(GL_CULL_FACE);
 		glLogicOp(GL_INVERT);
@@ -246,13 +245,11 @@ struct Game : public Scene {
 
 		modelview.load(player.make_view_matrix());
 
-		render_sky();
-
-		glClear(GL_DEPTH_BUFFER_BIT);
-
 		render_groundplane();
 		render_cubes();
 		world::render();
+
+		render_sky();
 
 		if (wireframe_mode)
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -357,6 +354,9 @@ struct Game : public Scene {
 	}
 
 	void render_sky() {
+		glDepthFunc(GL_EQUAL);
+		glDepthRange(1, 1);
+
 		mat4 skyview = player.make_sky_view_matrix();
 		Material* material = material_sky;
 		material->use();
@@ -385,6 +385,9 @@ struct Game : public Scene {
 		//material->uniform("sky_light", vec3(mix(Color(0xff61828a),
 		//                                        Color(0xff202030), time_of_day)));//colors::tango::skyblue_6));
 		sky.render();
+
+		glDepthFunc(GL_LESS);
+		glDepthRange(0, 1);
 	}
 
 	Window& screen;
