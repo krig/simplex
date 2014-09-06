@@ -10,14 +10,14 @@ namespace geo {
 	vector<cube_vert> make_cube_vertices(const vec3& size, bool invert_normals) {
 
 		vec3 corners[8] = {
-			{-1.f,-1.f,-1.f}, // bottom
-			{ 1.f,-1.f,-1.f},
-			{-1.f,-1.f, 1.f},
-			{ 1.f,-1.f, 1.f},
-			{-1.f, 1.f,-1.f}, // top
-			{-1.f, 1.f, 1.f},
-			{ 1.f, 1.f,-1.f},
-			{ 1.f, 1.f, 1.f}
+			{-0.5f,-0.5f,-0.5f}, // bottom
+			{ 0.5f,-0.5f,-0.5f},
+			{-0.5f,-0.5f, 0.5f},
+			{ 0.5f,-0.5f, 0.5f},
+			{-0.5f, 0.5f,-0.5f}, // top
+			{-0.5f, 0.5f, 0.5f},
+			{ 0.5f, 0.5f,-0.5f},
+			{ 0.5f, 0.5f, 0.5f}
 		};
 
 		// scale by size
