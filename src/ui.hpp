@@ -137,7 +137,7 @@ struct UiStack {
 			_vertices.vertex(p2);
 			_vertices.texcoord(vec2(d, d));
 			_vertices.vertex(vec2(p2.x, p1.y));
-			_vertices.write(_vbo, GL_STREAM_DRAW);
+			_vertices.write(_vbo, GL_DYNAMIC_DRAW);
 			_vertices.set_pointer(0, _position);
 			_vertices.set_pointer(1, _texcoord);
 			_vertices.set_pointer(2, _color);

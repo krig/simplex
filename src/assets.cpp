@@ -2,12 +2,22 @@
 #include "render.hpp"
 #include "assets.hpp"
 #include "notify.hpp"
-#include "cpptoml.h"
+
+#include <fstream>
+#include <algorithm>
+#include <functional>
+#include <cctype>
+#include <locale>
 
 namespace {
 	Notify notify;
 	dict<string, Asset*> assets;
 	dict<int, Asset*> wdmap;
+
+	static inline std::string &rtrim(std::string &s) {
+		s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
+		return s;
+	}
 
 	GLenum sdl_format_to_gl(SDL_Surface* image) {
 		GLenum format;
@@ -40,22 +50,19 @@ namespace {
 	}
 
 	void init_materials() {
-		auto materials = cpptoml::parse_file("data/materials.conf");
-		for (const auto& cfg : materials) {
+		string line;
+		std::ifstream infile("data/materials.conf");
+		while (std::getline(infile, line)) {
+			rtrim(line);
 			unique_ptr<Material> nm(new Material);
 			nm->program = 0;
-			nm->name = cfg.first;
-			auto gp = materials.get_group(cfg.first);
-			if (!gp)
-				throw error("expected material definition: %s", nm->name.c_str());
-			string* v = gp->get_as<string>("vertex");
-			string* f = gp->get_as<string>("fragment");
-			if (v == 0 || f == 0)
-				throw error("material is missing vertex/fragment shader: %s", nm->name.c_str());
+			nm->name = line;
+			string v = line + ".vsh";
+			string f = line + ".fsh";
 			nm->vshader = "data/";
-			nm->vshader += *v;
+			nm->vshader += v;
 			nm->fshader = "data/";
-			nm->fshader += *f;
+			nm->fshader += f;
 			nm->load();
 			add_notification(nm->vshader.c_str(), nm.get());
 			add_notification(nm->fshader.c_str(), nm.get());

@@ -1,15 +1,6 @@
 [submodule "lib/glm"]
 	path = lib/glm
 	url = git@github.com:g-truc/glm.git
-[submodule "lib/glew"]
-	path = lib/glew
-	url = git@github.com:nigels-com/glew.git
-[submodule "lib/stb"]
-	path = lib/stb
-	url = git@github.com:nothings/stb
-[submodule "lib/cpptoml"]
-	path = lib/cpptoml
-	url = git@github.com:skystrife/cpptoml.git
 [submodule "lib/easing"]
 	path = lib/easing
 	url = git@github.com:krig/easing.git
