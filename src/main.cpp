@@ -9,8 +9,8 @@ Scene* make_game(Window& screen);
 
 namespace {
 	const double TARGET_FPS = 120.0;
-	const int SCR_W = 960;
-	const int SCR_H = 480;
+	const int SCR_W = 1650;
+	const int SCR_H = 960;
 
 	void mainloop(Scene* scene) {
 		SDL_Event event;

@@ -16,8 +16,8 @@ namespace audio {
 			_chunk = Mix_LoadWAV(filename);
 		}
 
-		void play(int channel) {
-			Mix_PlayChannel(channel, _chunk, 0);
+		void play(int channel, int loops = 0) {
+			Mix_PlayChannel(channel, _chunk, loops);
 		}
 
 		Mix_Chunk* _chunk;
